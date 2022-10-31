@@ -6,6 +6,7 @@
   "scripts": {
     "start": "node index.js",
     "serve": "cross-env NODE_ENV=development nodemon -w lib index.js",
+    "docs": "jsdoc -c ./config/jsdoc.json",
     "lint": "eslint -c .eslintrc \"lib/**/*.js\" \"test/**/*.js\" index.js",
     "lint:fix": "eslint -c .eslintrc \"lib/**/*.js\" \"test/**/*.js\" index.js --fix",
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -25,6 +26,7 @@
     "yaml": "^2.1.3"
   },
   "devDependencies": {
+    "clean-jsdoc-theme": "^4.1.8",
     "cross-env": "^7.0.3",
     "eslint": "^8.26.0",
     "eslint-config-standard": "^17.0.0",
