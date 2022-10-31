@@ -1,0 +1,9 @@
+var/
+/node_modules/
+docs/jsdoc
+package-lock.json
+
+*.env
+*.env.local
+
+.DS_Store
