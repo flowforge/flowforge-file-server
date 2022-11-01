@@ -30,3 +30,24 @@
     **GET** */v1/quota/:teamId*
 
     Content-Type: application/json
+
+## Configuration
+
+Configuration is read from `etc/flowforge.yml`
+
+```
+host: 0.0.0.0
+port: 3001
+driver:
+  type: localfs
+  root: var/root
+```
+
+- driver
+    - type - can be `localfs` or `memory` (for testing)
+    - root - path to store team files, relative path will apply to FLOWFORGE_HOME
+
+### Environment variables
+
+- FLOWFORGE_HOME default `/opt/flowforge-file-storage`
+- PORT overides value in config file, default 3001
