@@ -50,4 +50,4 @@ driver:
 ### Environment variables
 
 - FLOWFORGE_HOME default `/opt/flowforge-file-storage`
-- PORT overides value in config file, default 3001
+- PORT overrides value in config file, default 3001

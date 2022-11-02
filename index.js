@@ -16,7 +16,7 @@ const flowForgeFileServer = require('./lib/fileServer')
         async function exitWhenStopped () {
             if (!stopping) {
                 stopping = true
-                server.log.info('Stoping FlowForge File Server')
+                server.log.info('Stopping FlowForge File Server')
                 await server.close()
                 server.log.info('FlowForge File Server stopped')
                 process.exit(0)
