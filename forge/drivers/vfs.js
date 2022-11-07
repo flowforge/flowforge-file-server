@@ -6,6 +6,10 @@ module.exports = function (app, theDriver, teamId, projectId) {
 
         resolvePath: theDriver.resolvePath,
 
+        async ensureDir (dirName) {
+            return await theDriver.ensureDir(teamId, projectId, dirName)
+        },
+        
         async save (path, data) {
             return await theDriver.save(teamId, projectId, path, data)
         },

@@ -14,6 +14,7 @@ module.exports = async (options = {}) => {
     }
 
     const server = fastify({
+        bodyLimit: 10 * 1024 * 1024, // Limit set to 10MB,
         maxParamLength: 500,
         trustProxy: true,
         logger: {

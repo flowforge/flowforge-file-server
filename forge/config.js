@@ -5,12 +5,16 @@ const path = require('path')
 const YAML = require('yaml')
 
 module.exports = fp(async function (app, opts, next) {
+    const testMode = !!process.env.FF_FS_TEST_CONFIG
+    if (!opts.config && testMode) {
+        opts.config = YAML.parse(process.env.FF_FS_TEST_CONFIG)
+    }
     if (opts.config) {
         // A custom config has been passed in. This means we're running
         // programmatically rather than manually. At this stage, that
         // means its our test framework.
         process.env.NODE_ENV = 'development'
-        process.env.FLOWFORGE_HOME = process.cwd()
+        process.env.FLOWFORGE_HOME = opts.config.FLOWFORGE_HOME || process.cwd()
     } else if (!process.env.FLOWFORGE_HOME) {
         if (process.env.NODE_ENV === 'development') {
             app.log.info('Development mode')
@@ -39,10 +43,9 @@ module.exports = fp(async function (app, opts, next) {
     } catch (err) {
         // No git directory
     }
+
     app.log.info(`FlowForge File Storage v${ffVersion}`)
-
     app.log.info(`FlowForge File Storage running with NodeJS ${process.version}`)
-
     app.log.info(`FlowForge File Storage Data Directory: ${process.env.FLOWFORGE_HOME}`)
 
     let configFile = path.join(process.env.FLOWFORGE_HOME, '/etc/flowforge-storage.yml')
