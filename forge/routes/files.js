@@ -63,7 +63,11 @@ module.exports = async function (app, opts, done) {
             }
         } catch (err) {
             console.log(err)
-            reply.code(500).send()
+            if (err.code === 'ENOENT') {
+                reply.code(404).send()
+            } else {
+                reply.code(500).send()
+            }
         }
     })
 

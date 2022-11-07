@@ -45,9 +45,9 @@ module.exports = fp(async function (app, opts, next) {
 
     app.log.info(`FlowForge File Storage Data Directory: ${process.env.FLOWFORGE_HOME}`)
 
-    let configFile = path.join(process.env.FLOWFORGE_HOME, '/etc/flowforge.yml')
-    if (fs.existsSync(path.join(process.env.FLOWFORGE_HOME, '/etc/flowforge.local.yml'))) {
-        configFile = path.join(process.env.FLOWFORGE_HOME, '/etc/flowforge.local.yml')
+    let configFile = path.join(process.env.FLOWFORGE_HOME, '/etc/flowforge-storage.yml')
+    if (fs.existsSync(path.join(process.env.FLOWFORGE_HOME, '/etc/flowforge-storage.local.yml'))) {
+        configFile = path.join(process.env.FLOWFORGE_HOME, '/etc/flowforge-storage.local.yml')
     }
     if (!opts.config) {
         app.log.info(`Config File: ${configFile}`)
