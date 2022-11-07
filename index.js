@@ -2,7 +2,7 @@
 'use strict'
 
 const semver = require('semver')
-const flowForgeFileServer = require('./lib/fileServer')
+const flowForgeFileServer = require('./forge/fileServer')
 
 ;(async function () {
     if (!semver.satisfies(process.version, '>=16.0.0')) {
