@@ -6,8 +6,6 @@
  */
 
 module.exports = async function (app, opts, done) {
-    app.addHook('preHandler', app.checkAuth)
-
     app.addContentTypeParser('application/octet-stream', { parseAs: 'buffer' }, function (request, payload, done) {
         done(null, payload)
     })
@@ -65,7 +63,11 @@ module.exports = async function (app, opts, done) {
             }
         } catch (err) {
             console.log(err)
-            reply.code(500).send()
+            if (err.code === 'ENOENT') {
+                reply.code(404).send()
+            } else {
+                reply.code(500).send()
+            }
         }
     })
 
