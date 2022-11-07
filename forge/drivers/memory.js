@@ -12,7 +12,7 @@ function resolvePath (teamId, projectId, path) {
     } else {
         resolvedPath = join(canary, teamId, projectId, path)
     }
-    if (resolvedPath.startsWith(minPath)) {
+    if (resolvedPath.startsWith(minPath)) 
         const array = resolvedPath.split(pathSeparator)
         array.shift()
         resolvedPath = array.join(pathSeparator)
@@ -30,6 +30,7 @@ module.exports = function (app) {
             return ''
         },
         resolvePath,
+        
         async ensureDir (teamId, projectId, path) {
             try {
                 resolvePath(teamId, projectId, path)
@@ -38,6 +39,7 @@ module.exports = function (app) {
                 return false
             }
         },
+
         async save (teamId, projectId, path, data) {
             storage[resolvePath(teamId, projectId, path)] = data
         },

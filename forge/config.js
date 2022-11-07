@@ -48,19 +48,18 @@ module.exports = fp(async function (app, opts, next) {
     app.log.info(`FlowForge File Storage running with NodeJS ${process.version}`)
     app.log.info(`FlowForge File Storage Data Directory: ${process.env.FLOWFORGE_HOME}`)
 
+    let configFile = path.join(process.env.FLOWFORGE_HOME, '/etc/flowforge-storage.yml')
+    if (fs.existsSync(path.join(process.env.FLOWFORGE_HOME, '/etc/flowforge-storage.local.yml'))) {
+        configFile = path.join(process.env.FLOWFORGE_HOME, '/etc/flowforge-storage.local.yml')
+    }
+    if (!opts.config) {
+        app.log.info(`Config File: ${configFile}`)
+    }
     try {
-        let config = {}
-        if (opts.config === undefined) {
-            let configFile = path.join(process.env.FLOWFORGE_HOME, '/etc/flowforge.yml')
-            app.log.info(`Config File: ${configFile}`)
-            if (fs.existsSync(path.join(process.env.FLOWFORGE_HOME, '/etc/flowforge.local.yml'))) {
-                configFile = path.join(process.env.FLOWFORGE_HOME, '/etc/flowforge.local.yml')
-            }
-            const configFileContent = process.env.FF_FS_TEST_CONFIG || fs.readFileSync(configFile, 'utf-8')
-            config = YAML.parse(configFileContent)
-        } else {
-            config = { ...opts.config }
-        }
+        const configFileContent = fs.readFileSync(configFile, 'utf-8')
+        const config = opts.config === undefined
+            ? YAML.parse(configFileContent)
+            : { ...opts.config }
 
         config.version = ffVersion
         config.home = process.env.FLOWFORGE_HOME

@@ -18,6 +18,7 @@ async function readDirSize (dir) {
 
     return (await Promise.all(paths)).flat(Infinity).reduce((i, size) => i + size, 0)
 }
+
 function cleanError (error, path, op) {
     if (error.code === 'ENOENT') {
         const err = new Error(`ENOENT: no such file or directory, ${op || 'stat'} '${path}'`)

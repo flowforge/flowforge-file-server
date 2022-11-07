@@ -1,5 +1,8 @@
 # A Basic Object Store for use with FlowForge
 
+## Authorisation
+
+All requests should include a `Authorization` header with a Bearer token assigned by the FlowForge platform to identify
 ## End Points
 
 - Create/Replace
