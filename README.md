@@ -43,12 +43,21 @@ host: 0.0.0.0
 port: 3001
 driver:
   type: localfs
-  root: var/root
+  options:
+    root: var/root
 ```
 
 - driver
-    - type - can be `localfs` or `memory` (for testing)
+    - type - can be `s3`, `localfs` or `memory` (for testing)
+    - options - will vary by driver
+
+### S3
+- options
+    - region
+### LocalFS
+- options
     - root - path to store team files, relative path will apply to FLOWFORGE_HOME
+### Memory
 
 ### Environment variables
 

@@ -8,4 +8,5 @@ base_url: http://localhost:3000
 #   storage: forge.db
 driver:
   type: localfs
-  root: var/root
+  options:
+    root: var/root
