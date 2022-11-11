@@ -72,15 +72,15 @@ module.exports = function (app) {
                         Key: resolvedPath
                     }))
                     const stream = file.Body
-                    const body = await (new Promise((resolve, reject)=>{
+                    const body = await (new Promise((resolve, reject) => {
                         const chunks = []
                         stream.on('data', chunk => chunks.push(chunk))
                         stream.once('end', () => resolve(Buffer.concat(chunks)))
                         stream.once('error', reject)
                     }))
                     // I HATE this as it's basically double the file size in memory
-                    const newBody = Buffer.concat(body, data)
-                    await this.save(teamId, projectId, parse, newBody)
+                    const newBody = Buffer.concat([body, data])
+                    await this.save(teamId, projectId, path, newBody)
                 } catch (err) {
                     if (err.type === 'NoSuchKey') {
                         throw new Error(`ENOENT: no such file or directory, open '${path}'`)
