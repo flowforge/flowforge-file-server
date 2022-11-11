@@ -1,10 +1,8 @@
 const fastify = require('fastify')
-const db = require('./db')
 const auth = require('./auth')
 const config = require('./config')
 const driver = require('./driver')
 const routes = require('./routes')
-const settings = require('./settings')
 const helmet = require('@fastify/helmet')
 
 module.exports = async (options = {}) => {
@@ -42,11 +40,11 @@ module.exports = async (options = {}) => {
             server.log.level = server.config.logging.level
         }
 
-        // Setup DB
-        await server.register(db, {})
+        // // Setup DB
+        // await server.register(db, {})
 
-        // Setup settings
-        await server.register(settings, {})
+        // // Setup settings
+        // await server.register(settings, {})
 
         // Authentication Handler
         await server.register(auth, {})
