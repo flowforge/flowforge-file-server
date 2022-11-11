@@ -52,11 +52,19 @@ driver:
     - options - will vary by driver
 
 ### S3
+
+The following can be any of the options for the S3Client Contructor, see [here](https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/clients/client-s3/interfaces/s3clientconfig.html)
+
 - options
-    - region
+    - bucket - name of S3 Bucket (required)
+    - region - AWS Region
+    - endpoint - S3 ObjectStore Endpoint (if not using AWS S3)
+    - forcePathStyle: true/false
+    - credential
+        - accessKeyId - AccountID/Username
+        - secretAccessKey - SecretKey/Password
 ### LocalFS
 - options
-    - bucket - name of S3 Bucket
     - root - path to store team files, relative path will apply to FLOWFORGE_HOME
 ### Memory
 
