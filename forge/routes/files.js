@@ -10,7 +10,6 @@
 /** @typedef {import('fastify').FastifyRequest} FastifyRequest */
 
 module.exports = async function (app, opts, done) {
-
     app.addContentTypeParser('application/octet-stream', { parseAs: 'buffer' }, function (request, payload, done) {
         done(null, payload)
     })

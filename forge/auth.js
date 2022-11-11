@@ -7,7 +7,7 @@ const ttl = 90 * 1000
 
 module.exports = fp(async function (app, opts, done) {
     const client = got.extend({
-        prefixUrl: `${app.config.base_url}/token`,
+        prefixUrl: `${app.config.base_url}/token/test/`,
         headers: {
             'user-agent': 'FlowForge Storage Server'
         },
@@ -16,9 +16,9 @@ module.exports = fp(async function (app, opts, done) {
         }
     })
 
-    async function checkToken(token) {
+    async function checkToken (projectId, token) {
         try {
-            await client.get('test', {
+            await client.get(projectId, {
                 headers: {
                     authorization: `Bearer ${token}`
                 }
@@ -45,7 +45,7 @@ module.exports = fp(async function (app, opts, done) {
                     const cacheEntry = authCache[token]
                     if ((Date.now() - cacheEntry.ttl) >= ttl) {
                         // console.log('expired')
-                        if (!await checkToken(token)) {
+                        if (!await checkToken(request.params.projectId, token)) {
                             reply.code(401).send({ code: 'unauthorized', error: 'unauthorized' })
                             delete authCache[token]
                         } else {
@@ -59,7 +59,7 @@ module.exports = fp(async function (app, opts, done) {
                     }
                 } else {
                     // console.log('not in cache')
-                    if (!await checkToken(token)) {
+                    if (!await checkToken(request.params.projectId, token)) {
                         reply.code(401).send({ code: 'unauthorized', error: 'unauthorized' })
                     } else {
                         authCache[token] = {
