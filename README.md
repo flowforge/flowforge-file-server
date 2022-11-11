@@ -56,6 +56,7 @@ driver:
     - region
 ### LocalFS
 - options
+    - bucket - name of S3 Bucket
     - root - path to store team files, relative path will apply to FLOWFORGE_HOME
 ### Memory
 
