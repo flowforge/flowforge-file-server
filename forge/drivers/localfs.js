@@ -34,7 +34,7 @@ function cleanError (error, path, op) {
 
 module.exports = function (app) {
     let rootPath
-    if (!isAbsolute(app.config.driver.root)) {
+    if (!isAbsolute(app.config.driver.options.root)) {
         rootPath = join(app.config.home, app.config.driver.options?.root)
     } else {
         rootPath = app.config.driver.root
