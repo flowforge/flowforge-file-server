@@ -7,7 +7,7 @@ const ttl = 90 * 1000
 
 module.exports = fp(async function (app, opts, done) {
     const client = got.extend({
-        prefixUrl: `${app.config.base_url}/token/test/`,
+        prefixUrl: `${app.config.base_url}/account/check/project`,
         headers: {
             'user-agent': 'FlowForge Storage Server'
         },

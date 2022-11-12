@@ -43,12 +43,30 @@ host: 0.0.0.0
 port: 3001
 driver:
   type: localfs
-  root: var/root
+  options:
+    root: var/root
 ```
 
 - driver
-    - type - can be `localfs` or `memory` (for testing)
+    - type - can be `s3`, `localfs` or `memory` (for testing)
+    - options - will vary by driver
+
+### S3
+
+The following can be any of the options for the S3Client Contructor, see [here](https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/clients/client-s3/interfaces/s3clientconfig.html)
+
+- options
+    - bucket - name of S3 Bucket (required)
+    - region - AWS Region
+    - endpoint - S3 ObjectStore Endpoint (if not using AWS S3)
+    - forcePathStyle: true/false
+    - credential
+        - accessKeyId - AccountID/Username
+        - secretAccessKey - SecretKey/Password
+### LocalFS
+- options
     - root - path to store team files, relative path will apply to FLOWFORGE_HOME
+### Memory
 
 ### Environment variables
 

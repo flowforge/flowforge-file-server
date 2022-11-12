@@ -7,5 +7,16 @@ base_url: http://localhost:3000
 #   type: sqlite
 #   storage: forge.db
 driver:
-  type: localfs
-  root: var/root
+  # s3, localfs, memory
+  # type: localfs
+  # options:
+  #   root: var/root
+  type: s3
+  options:
+    bucket: test
+    credentials:
+      accessKeyId: test
+      secretAccessKey: password
+    endpoint: http://localhost:9000
+    forcePathStyle: true
+    region: eu-west-1
