@@ -1,5 +1,7 @@
 config/
 test/
 var/
+docs/
+Dockerfile
 .github/
 .eslintrc
