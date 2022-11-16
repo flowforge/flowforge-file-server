@@ -1,8 +1,0 @@
-{
-    "name": "@flowforge/file-server-container",
-    "private": true,
-    "dependencies": {
-        "@flowforge/file-storage": "nightly"
-    },
-    "license": "Apache-2.0"
-}
