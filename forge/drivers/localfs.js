@@ -41,7 +41,9 @@ module.exports = function (app) {
     }
 
     if (!fs.existsSync(rootPath)) {
-        fs.mkdirSync(rootPath)
+        fs.mkdirSync(rootPath, {
+            recursive: true
+        })
     }
 
     function resolvePath (teamId, projectId, path) {

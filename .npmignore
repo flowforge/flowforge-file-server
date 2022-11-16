@@ -3,5 +3,6 @@ test/
 var/
 docs/
 Dockerfile
+docker/
 .github/
 .eslintrc
