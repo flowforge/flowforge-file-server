@@ -1,4 +1,4 @@
-FROM nodejs:16-alpine
+FROM node:16-alpine
 
 ARG REGISTRY
 ARG REGISTRY_TOKEN
