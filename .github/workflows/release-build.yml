@@ -4,6 +4,17 @@ on:
       - "v*.*.*"
 
 jobs:
+  build_npm:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - uses: actions/setup-node@v1
+        with:
+          node-version: 16
+      - uses: JS-DevTools/npm-publish@v1
+        with:
+          token: ${{ secrets.NPM_PUBLISH_TOKEN }}
   build_application_container:
     runs-on: ubuntu-latest
     steps:
