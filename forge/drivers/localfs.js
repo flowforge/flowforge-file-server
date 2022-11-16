@@ -46,6 +46,8 @@ module.exports = function (app) {
         })
     }
 
+    app.log.info(`FlowForge File Storage localfs root Directory: ${rootPath}`)
+
     function resolvePath (teamId, projectId, path) {
         let resolvedPath
         if (isAbsolute(path)) {
