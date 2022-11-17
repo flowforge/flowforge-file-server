@@ -46,7 +46,7 @@ module.exports = fp(async function (app, opts, next) {
 
     app.log.info(`FlowForge File Storage v${ffVersion}`)
     app.log.info(`FlowForge File Storage running with NodeJS ${process.version}`)
-    app.log.info(`FlowForge File Storage Data Directory: ${process.env.FLOWFORGE_HOME}`)
+    app.log.info(`FlowForge File Storage HOME Directory: ${process.env.FLOWFORGE_HOME}`)
 
     let config
 

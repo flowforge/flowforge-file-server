@@ -2,6 +2,7 @@ var/
 /node_modules/
 docs/jsdoc
 package-lock.json
+etc/flowforge-storage.local.yml
 
 *.env
 *.env.local
