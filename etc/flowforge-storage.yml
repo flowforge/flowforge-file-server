@@ -1,22 +1,17 @@
 host: '0.0.0.0'
 port: 3001
 base_url: http://localhost:3000
-# flowforge_home: /opt/share/projects/flowforge/flowforge-dev-env/packages/flowforge
-# db:
-#   logging: false
-#   type: sqlite
-#   storage: forge.db
 driver:
   # s3, localfs, memory
-  # type: localfs
-  # options:
-  #   root: var/root
-  type: s3
+  type: localfs
   options:
-    bucket: test
-    credentials:
-      accessKeyId: test
-      secretAccessKey: password
-    endpoint: http://localhost:9000
-    forcePathStyle: true
-    region: eu-west-1
+    root: var/root
+  # type: s3
+  # options:
+  #   bucket: test
+  #   credentials:
+  #     accessKeyId: test
+  #     secretAccessKey: password
+  #   endpoint: http://localhost:9000
+  #   forcePathStyle: true
+  #   region: eu-west-1

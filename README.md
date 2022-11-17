@@ -63,9 +63,11 @@ The following can be any of the options for the S3Client Contructor, see [here](
     - credential
         - accessKeyId - AccountID/Username
         - secretAccessKey - SecretKey/Password
+
 ### LocalFS
 - options
     - root - path to store team files, relative path will apply to FLOWFORGE_HOME
+
 ### Memory
 
 ### Environment variables
