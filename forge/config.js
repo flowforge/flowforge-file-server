@@ -83,7 +83,7 @@ module.exports = fp(async function (app, opts, next) {
         Object.freeze(config)
         app.decorate('config', config)
     } catch (err) {
-        app.log.err(`Failed to read config file ${configFile}: ${err}`)
+        app.log.error(`Failed to read config file ${configFile}: ${err}`)
     }
 
     next()
