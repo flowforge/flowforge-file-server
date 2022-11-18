@@ -68,7 +68,6 @@ module.exports = async function (app, opts, done) {
                 reply.code(404).send()
             }
         } catch (err) {
-            console.log(err)
             if (err.code === 'ENOENT') {
                 reply.code(404).send(err)
             } else if (err.code === 'ENOTDIR') {
