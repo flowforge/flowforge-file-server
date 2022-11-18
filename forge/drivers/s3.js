@@ -42,11 +42,10 @@ module.exports = function (app) {
         resolvePath,
         async ensureDir (teamId, projectId, path) {
             const resolvedPath = resolvePath(teamId, projectId, path)
-            const objects = await s3.send(new ListObjectsCommand({
+            await s3.send(new ListObjectsCommand({
                 Bucket: bucketID,
                 Prefix: resolvedPath
             }))
-            // console.log(objects)
             return true
         },
         async save (teamId, projectId, path, data) {

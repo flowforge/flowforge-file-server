@@ -67,31 +67,27 @@ module.exports = fp(async function (app, opts, next) {
         }
     }
 
-    try {
-        config.version = ffVersion
-        config.home = process.env.FLOWFORGE_HOME
-        config.port = process.env.PORT || config.port || 3001
-        config.host = config.host || 'localhost'
+    config.version = ffVersion
+    config.home = process.env.FLOWFORGE_HOME
+    config.port = process.env.PORT || config.port || 3001
+    config.host = config.host || 'localhost'
 
-        if (!config.driver) {
-            config.driver = { type: 'localfs' }
-        }
-
-        if (!config.logging) {
-            config.logging = {
-                level: 'info',
-                http: 'warn'
-            }
-        } else {
-            if (!config.logging.http) {
-                config.logging.http = 'warn'
-            }
-        }
-        Object.freeze(config)
-        app.decorate('config', config)
-    } catch (err) {
-        app.log.error(`Failed to read config file ${configFile}: ${err}`)
+    if (!config.driver) {
+        config.driver = { type: 'localfs' }
     }
+
+    if (!config.logging) {
+        config.logging = {
+            level: 'info',
+            http: 'warn'
+        }
+    } else {
+        if (!config.logging.http) {
+            config.logging.http = 'warn'
+        }
+    }
+    Object.freeze(config)
+    app.decorate('config', config)
 
     next()
 })
