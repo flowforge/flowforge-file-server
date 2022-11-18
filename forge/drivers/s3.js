@@ -46,7 +46,7 @@ module.exports = function (app) {
                 Bucket: bucketID,
                 Prefix: resolvedPath
             }))
-            console.log(objects)
+            // console.log(objects)
             return true
         },
         async save (teamId, projectId, path, data) {
@@ -83,13 +83,15 @@ module.exports = function (app) {
                     await this.save(teamId, projectId, path, newBody)
                 } catch (err) {
                     if (err.type === 'NoSuchKey') {
-                        throw new Error(`ENOENT: no such file or directory, open '${path}'`)
+                        const error = new Error(`ENOENT: no such file or directory, open '${path}'`)
+                        error.code = 'ENOENT'
+                        throw error
                     } else {
                         throw err
                     }
                 }
             } catch (err) {
-                if (err.type === 'NoSuchKey') {
+                if (err.Code === 'NoSuchKey') {
                     // File not found so just write it
                     await this.save(this.teamId, this.projectId, path, data)
                 } else {
@@ -112,8 +114,10 @@ module.exports = function (app) {
                     stream.once('error', reject)
                 })
             } catch (err) {
-                if (err.type === 'NoSuchKey') {
-                    throw new Error(`ENOENT: no such file or directory, open '${path}'`)
+                if (err.Code === 'NoSuchKey') {
+                    const error = new Error(`ENOENT: no such file or directory, open '${path}'`)
+                    error.code = 'ENOENT'
+                    throw error
                 } else {
                     throw err
                 }
