@@ -5,11 +5,11 @@ const path = require('path')
 const YAML = require('yaml')
 
 module.exports = fp(async function (app, opts, next) {
-    const testMode = !!process.env.FF_FS_TEST_CONFIG
-    if (!opts.config && testMode) {
+    if (!opts.config && process.env.FF_FS_TEST_CONFIG) {
         opts.config = YAML.parse(process.env.FF_FS_TEST_CONFIG)
     }
-    if (opts.config) {
+    const testMode = !!opts.config
+    if (testMode) {
         // A custom config has been passed in. This means we're running
         // programmatically rather than manually. At this stage, that
         // means its our test framework.
@@ -48,26 +48,33 @@ module.exports = fp(async function (app, opts, next) {
     app.log.info(`FlowForge File Storage running with NodeJS ${process.version}`)
     app.log.info(`FlowForge File Storage HOME Directory: ${process.env.FLOWFORGE_HOME}`)
 
-    let configFile = path.join(process.env.FLOWFORGE_HOME, '/etc/flowforge-storage.yml')
-    if (fs.existsSync(path.join(process.env.FLOWFORGE_HOME, '/etc/flowforge-storage.local.yml'))) {
-        configFile = path.join(process.env.FLOWFORGE_HOME, '/etc/flowforge-storage.local.yml')
-    }
-    if (!opts.config) {
-        app.log.info(`Config File: ${configFile}`)
-    }
-    try {
-        const configFileContent = fs.readFileSync(configFile, 'utf-8')
-        const config = opts.config === undefined
-            ? YAML.parse(configFileContent)
-            : { ...opts.config }
+    let config
 
+    if (testMode) {
+        app.log.info('FlowForge File Storage is running in test mode')
+        config = { ...opts.config }
+    } else {
+        let configFile = path.join(process.env.FLOWFORGE_HOME, '/etc/flowforge-storage.yml')
+        if (fs.existsSync(path.join(process.env.FLOWFORGE_HOME, '/etc/flowforge-storage.local.yml'))) {
+            configFile = path.join(process.env.FLOWFORGE_HOME, '/etc/flowforge-storage.local.yml')
+        }
+        try {
+            app.log.info(`FlowForge File Storage Config File: ${configFile}`)
+            const configFileContent = fs.readFileSync(configFile, 'utf-8')
+            config = YAML.parse(configFileContent)
+        } catch (err) {
+            app.log.error(`Failed to read config file ${configFile}: ${err.message}`)
+        }
+    }
+
+    try {
         config.version = ffVersion
         config.home = process.env.FLOWFORGE_HOME
         config.port = process.env.PORT || config.port || 3001
         config.host = config.host || 'localhost'
 
         if (!config.driver) {
-            config.driver = { type: 'memory' } // should default to localfs
+            config.driver = { type: 'localfs' }
         }
 
         if (!config.logging) {

@@ -2,7 +2,7 @@ host: '0.0.0.0'
 port: 3001
 base_url: http://localhost:3000
 driver:
-  # s3, localfs, memory
+  # localfs, s3, memory
   type: localfs
   options:
     root: var/root

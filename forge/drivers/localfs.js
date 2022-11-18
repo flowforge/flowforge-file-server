@@ -37,13 +37,11 @@ module.exports = function (app) {
     if (!isAbsolute(app.config.driver.options.root)) {
         rootPath = join(app.config.home, app.config.driver.options?.root)
     } else {
-        rootPath = app.config.driver.root
+        rootPath = app.config.driver.options.root
     }
 
     if (!fs.existsSync(rootPath)) {
-        fs.mkdirSync(rootPath, {
-            recursive: true
-        })
+        fs.mkdirSync(rootPath, { recursive: true })
     }
 
     app.log.info(`FlowForge File Storage localfs root Directory: ${rootPath}`)
