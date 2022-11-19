@@ -1,5 +1,5 @@
 {
-  "name": "@flowforge/file-storage",
+  "name": "@flowforge/file-server",
   "version": "0.0.1",
   "description": "A basic Object Storage backend",
   "main": "index.js",
@@ -20,16 +20,16 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/flowforge/flowforge-file-storage.git"
+    "url": "git+https://github.com/flowforge/flowforge-file-server.git"
   },
   "author": {
     "name": "FlowForge Inc."
   },
   "license": "Apache-2.0",
   "bugs": {
-    "url": "https://github.com/flowforge/flowforge-file-storage/issues"
+    "url": "https://github.com/flowforge/flowforge-file-server/issues"
   },
-  "homepage": "https://github.com/flowforge/flowforge-file-storage#readme",
+  "homepage": "https://github.com/flowforge/flowforge-file-server#readme",
   "dependencies": {
     "@aws-sdk/client-s3": "^3.204.0",
     "@fastify/helmet": "^10.0.2",
