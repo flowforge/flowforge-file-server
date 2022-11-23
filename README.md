@@ -82,10 +82,14 @@ driver:
 ```
 
 ### LocalFS
+
 - options
     - root - path to store team files, relative path will apply to FLOWFORGE_HOME
 
 ### Memory
+
+This driver is purely to make testing easier, it has no configuration
+options.
 
 ### Environment variables
 
