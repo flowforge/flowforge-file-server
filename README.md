@@ -64,6 +64,21 @@ The following can be any of the options for the S3Client Contructor, see [here](
         - accessKeyId - AccountID/Username
         - secretAccessKey - SecretKey/Password
 
+```
+host: '0.0.0.0'
+port: 3001
+base_url: http://forge.default
+driver:
+  type: s3
+  options:
+    bucket: flowforge-files
+    credentials:
+      accessKeyId: XXXXXXXXXXXXXXXXXXX
+      secretAccessKey: XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+    forcePathStyle: true
+    region: us-east-1
+```
+
 ### LocalFS
 - options
     - root - path to store team files, relative path will apply to FLOWFORGE_HOME
