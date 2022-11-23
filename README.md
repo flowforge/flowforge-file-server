@@ -41,12 +41,14 @@ Configuration is read from `etc/flowforge-storage.yml`
 ```
 host: 0.0.0.0
 port: 3001
+base_url: http://flowforge:3000
 driver:
   type: localfs
   options:
     root: var/root
 ```
 
+- base_url - Where to reach the core FlowForge platform
 - driver
     - type - can be `s3`, `localfs` or `memory` (for testing)
     - options - will vary by driver
