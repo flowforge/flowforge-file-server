@@ -36,17 +36,19 @@ All requests should include a `Authorization` header with a Bearer token assigne
 
 ## Configuration
 
-Configuration is read from `etc/flowforge.yml`
+Configuration is read from `etc/flowforge-storage.yml`
 
 ```
 host: 0.0.0.0
 port: 3001
+base_url: http://flowforge:3000
 driver:
   type: localfs
   options:
     root: var/root
 ```
 
+- base_url - Where to reach the core FlowForge platform
 - driver
     - type - can be `s3`, `localfs` or `memory` (for testing)
     - options - will vary by driver
@@ -64,11 +66,30 @@ The following can be any of the options for the S3Client Contructor, see [here](
         - accessKeyId - AccountID/Username
         - secretAccessKey - SecretKey/Password
 
+```
+host: '0.0.0.0'
+port: 3001
+base_url: http://forge.default
+driver:
+  type: s3
+  options:
+    bucket: flowforge-files
+    credentials:
+      accessKeyId: XXXXXXXXXXXXXXXXXXX
+      secretAccessKey: XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+    forcePathStyle: true
+    region: us-east-1
+```
+
 ### LocalFS
+
 - options
     - root - path to store team files, relative path will apply to FLOWFORGE_HOME
 
 ### Memory
+
+This driver is purely to make testing easier, it has no configuration
+options.
 
 ### Environment variables
 
