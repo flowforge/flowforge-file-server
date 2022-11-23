@@ -36,7 +36,7 @@ All requests should include a `Authorization` header with a Bearer token assigne
 
 ## Configuration
 
-Configuration is read from `etc/flowforge.yml`
+Configuration is read from `etc/flowforge-storage.yml`
 
 ```
 host: 0.0.0.0
