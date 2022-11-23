@@ -90,7 +90,7 @@ module.exports = function (app) {
                     }
                 }
             } catch (err) {
-                if (err.Code === 'NoSuchKey') {
+                if (err.type === 'NotFound') {
                     // File not found so just write it
                     await this.save(this.teamId, this.projectId, path, data)
                 } else {
