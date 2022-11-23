@@ -90,12 +90,7 @@ module.exports = function (app) {
                     }
                 }
             } catch (err) {
-                if (err.type === 'NotFound') {
-                    // File not found so just write it
-                    await this.save(this.teamId, this.projectId, path, data)
-                } else {
-                    throw err
-                }
+                await this.save(teamId, projectId, path, data)
             }
         },
         async read (teamId, projectId, path) {
