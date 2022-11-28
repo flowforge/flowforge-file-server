@@ -69,7 +69,7 @@ module.exports = fp(async function (app, opts, done) {
                 }
             }
         } else {
-            reply.code(401).send({ code: 'unauthorized', error: 'unauthorized'})
+            reply.code(401).send({ code: 'unauthorized', error: 'unauthorized' })
         }
     }
     app.decorate('checkAuth', checkAuth)

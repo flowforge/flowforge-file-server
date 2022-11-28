@@ -67,7 +67,7 @@ module.exports = async function (app, opts, done) {
     }, async (request, reply) => {
         const key = request.params.projectId +
             '.' + request.params.scope
-        const root = util.getObjectProperty(store,key)
+        const root = util.getObjectProperty(store, key)
         reply.send(Object.keys(root))
     })
 
