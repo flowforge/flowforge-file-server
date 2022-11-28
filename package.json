@@ -33,6 +33,7 @@
   "dependencies": {
     "@aws-sdk/client-s3": "^3.204.0",
     "@fastify/helmet": "^10.0.2",
+    "@node-red/util": "^3.0.2",
     "fastify": "^4.9.2",
     "fastify-plugin": "^4.3.0",
     "got": "^11.8.2",
