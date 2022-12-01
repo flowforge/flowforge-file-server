@@ -48,7 +48,7 @@ module.exports = async function (app, opts, done) {
      * @static
      * @memberof forge.fileserver.context
      */
-    app.get('/:projectId/:scope/', {
+    app.get('/:projectId/:scope', {
         schema: {
             query: {
                 type: 'object',
@@ -62,7 +62,8 @@ module.exports = async function (app, opts, done) {
             }
         }
     }, async (request, reply) => {
-        const keys = request.query.keys
+        console.log(request.query)
+        const keys = request.query.key
         const values = []
         keys.forEach(key => {
             const fullkey = request.params.projectId +
