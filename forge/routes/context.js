@@ -24,12 +24,15 @@ module.exports = async function (app, opts, done) {
     app.post('/:projectId/:scope', {
         schema: {
             body: {
-                type: 'array'
+                type: 'array',
+                items: {
+                    type: 'object'
+                }
             }
         }
     }, async (request, reply) => {
         const body = request.body
-        body.array.forEach(element => {
+        body.forEach(element => {
             const key = request.params.projectId +
             '.' + request.params.scope +
             '.' + element.key
