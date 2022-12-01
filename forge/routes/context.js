@@ -10,11 +10,19 @@
 /** @typedef {import('fastify').FastifyRequest} FastifyRequest */
 
 const util = require('@node-red/util').util
-
+const VALID_SCOPES = ['context', 'flow', 'global']
 const store = {}
 
 module.exports = async function (app, opts, done) {
-    const driver = require('../context-driver/memory.js')
+    app.addHook('preHandler', async (request, reply) => {
+        if (!request.params.projectId) {
+            reply.code(404).send({ code: 'invalid_project', error: 'Project ID Missing' })
+        } else if (!request.params.scope) {
+            reply.code(404).send({ code: 'invalid_scope', error: 'Scope missing' })
+        } else if (VALID_SCOPES.includes(request.params.scope) === false) {
+            reply.code(404).send({ code: 'invalid_scope', error: 'Scope not valid' })
+        }
+    })
 
     /**
      * Create/Update key
@@ -28,25 +36,18 @@ module.exports = async function (app, opts, done) {
             body: {
                 type: 'array',
                 items: {
-                    type: 'object',
-                    properties: {
-                        key: { type: 'string' },
-                        value: {}
-                    }
+                    type: 'object'
                 }
             }
         }
     }, async (request, reply) => {
         const body = request.body
-        const projectId = request.params.projectId
-        const scope = request.params.scope
-        // body.forEach(element => {
-        //     const key = request.params.projectId +
-        //     '.' + request.params.scope +
-        //     '.' + element.key
-        //     util.setObjectProperty(store, key, element.value)
-        // })
-        driver.set(projectId, scope, body)
+        body.forEach(element => {
+            const key = request.params.projectId +
+            '.' + request.params.scope +
+            '.' + element.key
+            util.setObjectProperty(store, key, element.value)
+        })
         reply.code(200).send({})
     })
 
@@ -71,33 +72,21 @@ module.exports = async function (app, opts, done) {
             }
         }
     }, async (request, reply) => {
-        console.log(request.query)
         const keys = request.query.key
-        const projectId = request.params.projectId
-        const scope = request.params.scope
-        // const values = []
-        // keys.forEach(key => {
-        //     const fullkey = request.params.projectId +
-        //     '.' + request.params.scope +
-        //     '.' + key
-        //     try {
-        //         const value = util.getObjectProperty(store, fullkey)
-        //         const ret = {
-        //             key,
-        //             value
-        //         }
-        //         values.push(ret)
-        //     } catch (err) {
-        //         if (err.type === 'TypeError') {
-        //             // reply.code(404).send()
-        //             values.push({
-        //                 key
-        //             })
-        //         }
-        //         // return false
-        //     }
-        // })
-        reply.send(driver.get(projectId, scope, keys))
+        const values = []
+        for (let index = 0; index < keys.length; index++) {
+            const key = keys[index]
+            try {
+                const fullKey = request.params.projectId +
+                    '.' + request.params.scope +
+                    '.' + key
+                const value = util.getObjectProperty(store, fullKey)
+                values[index] = { key, value }
+            } catch (err) {
+                values[index] = { key, value: null }
+            }
+        }
+        reply.send(values)
     })
 
     /**
@@ -110,12 +99,18 @@ module.exports = async function (app, opts, done) {
     app.get('/:projectId/:scope/keys', {
 
     }, async (request, reply) => {
-        // const key = request.params.projectId +
-        //     '.' + request.params.scope
-        // const root = util.getObjectProperty(store, key)
-        const projectId = request.params.projectId
-        const scope = request.params.scope
-        reply.send(driver.keys(projectId, scope))
+        if (!VALID_SCOPES.includes(request.params.scope)) {
+            reply.code(400).send({ code: 'bad_request', error: 'invalid scope' })
+        }
+        const key = request.params.projectId +
+            '.' + request.params.scope
+        let root = {}
+        try {
+            root = util.getObjectProperty(store, key)
+        } catch (err) {
+            // no error
+        }
+        return reply.send(Object.keys(root))
     })
 
     /**
@@ -128,10 +123,7 @@ module.exports = async function (app, opts, done) {
     app.delete('/:projectId/:scope', {
 
     }, async (request, reply) => {
-        // delete store[request.params.projectId][request.params.store]
-        const projectId = request.params.projectId
-        const scope = request.params.scope
-        driver.delete(projectId, scope)
+        delete store[request.params.projectId][request.params.store]
         reply.send()
     })
 

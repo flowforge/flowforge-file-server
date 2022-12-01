@@ -48,17 +48,16 @@ describe('@flowforge file-server', async function () {
         should(response.statusCode).eql(401)
     })
 
-    // TODO: Enable once context in added to file-server
-    // it('Should return 200 for authenticated request', async function () {
-    //     const response = await app.inject({
-    //         method: 'GET',
-    //         url: '/v1/context/test-project-1/global/keys',
-    //         headers: {
-    //             authorization: 'Bearer test-token-1'
-    //         }
-    //     })
-    //     should(response.statusCode).eql(200)
-    // })
+    it('Should return 200 for authenticated request', async function () {
+        const response = await app.inject({
+            method: 'GET',
+            url: '/v1/context/test-project-1/global/keys',
+            headers: {
+                authorization: 'Bearer test-token-1'
+            }
+        })
+        should(response.statusCode).eql(200)
+    })
 
     it('Should return 401 for missing token', async function () {
         const response = await app.inject({
@@ -71,37 +70,35 @@ describe('@flowforge file-server', async function () {
         should(response.statusCode).eql(401)
     })
 
-    // TODO: Enable once context in added to file-server
-    // it('Should return 401 for bad token', async function () {
-    //     const response = await app.inject({
-    //         method: 'GET',
-    //         url: '/v1/context/test-project-1/global/keys',
-    //         headers: {
-    //             authorization: 'Bearer this is not a valid token'
-    //         }
-    //     })
-    //     should(response.statusCode).eql(401)
-    // })
+    it('Should return 401 for bad token', async function () {
+        const response = await app.inject({
+            method: 'GET',
+            url: '/v1/context/test-project-1/global/keys',
+            headers: {
+                authorization: 'Bearer this is not a valid token'
+            }
+        })
+        should(response.statusCode).eql(401)
+    })
 
-    // TODO: Enable once context in added to file-server
-    // it('Should return 401 for wrong after token is authenticated and cached', async function () {
-    //     const response1 = await app.inject({
-    //         method: 'GET',
-    //         url: '/v1/context/test-project-1/global/keys',
-    //         headers: {
-    //             authorization: 'Bearer test-token-1'
-    //         }
-    //     })
-    //     should(response1.statusCode).eql(200)
-    //     const response2 = await app.inject({
-    //         method: 'GET',
-    //         url: '/v1/context/test-project-2/global/keys',
-    //         headers: {
-    //             authorization: 'Bearer test-token-1'
-    //         }
-    //     })
-    //     should(response2.statusCode).eql(401)
-    // })
+    it('Should return 401 for wrong after token is authenticated and cached', async function () {
+        const response1 = await app.inject({
+            method: 'GET',
+            url: '/v1/context/test-project-1/global/keys',
+            headers: {
+                authorization: 'Bearer test-token-1'
+            }
+        })
+        should(response1.statusCode).eql(200)
+        const response2 = await app.inject({
+            method: 'GET',
+            url: '/v1/context/test-project-2/global/keys',
+            headers: {
+                authorization: 'Bearer test-token-1'
+            }
+        })
+        should(response2.statusCode).eql(401)
+    })
 
     it('Should return 401 for bad token accessing files', async function () {
         const response = await app.inject({
