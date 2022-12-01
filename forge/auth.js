@@ -17,61 +17,82 @@ module.exports = fp(async function (app, opts, done) {
     })
 
     async function checkToken (projectId, token) {
-        try {
-            await client.get(projectId, {
-                headers: {
-                    authorization: `Bearer ${token}`
-                }
-            })
-            // console.log('token good')
-            return true
-        } catch (err) {
-            // console.log('token bad')
-            return false
-        }
+        const project = await client.get(projectId, {
+            headers: {
+                authorization: `Bearer ${token}`
+            }
+        })
+        return !!project
     }
 
     async function checkAuth (request, reply) {
-        if (request.headers?.authorization) {
-            const parts = request.headers.authorization.split(' ')
-            if (parts.length === 2) {
-                const scheme = parts[0]
-                const token = parts[1]
-                if (scheme !== 'Bearer') {
-                    reply.code(401).send({ code: 'unauthorized', error: 'unauthorized' })
+        try {
+            const token = getAuthToken(request)
+            const cacheOk = checkCache(token, request.params.projectId)
+            if (!cacheOk) {
+                if (!await checkToken(request.params.projectId, token)) {
+                    throw new Error('Invalid token')
                 }
-                if (authCache[token]) {
-                    // console.log('in cache')
-                    const cacheEntry = authCache[token]
-                    if ((Date.now() - cacheEntry.ttl) >= ttl) {
-                        // console.log('expired')
-                        if (!await checkToken(request.params.projectId, token)) {
-                            reply.code(401).send({ code: 'unauthorized', error: 'unauthorized' })
-                            delete authCache[token]
-                        } else {
-                            // console.log('updated')
-                            authCache[token] = {
-                                ttl: Date.now()
-                            }
-                        }
-                    } else {
-                        // console.log('in ttl')
-                    }
-                } else {
-                    // console.log('not in cache')
-                    if (!await checkToken(request.params.projectId, token)) {
-                        reply.code(401).send({ code: 'unauthorized', error: 'unauthorized' })
-                    } else {
-                        authCache[token] = {
-                            ttl: Date.now()
-                        }
-                    }
+                // update cache
+                authCache[token] = {
+                    ttl: Date.now(),
+                    projectId: request.params.projectId
                 }
             }
-        } else {
+        } catch (error) {
+            // always send 401 for security reasons
             reply.code(401).send({ code: 'unauthorized', error: 'unauthorized' })
         }
     }
+
+    /**
+     * Extract the token from the request.
+     * @throws {Error} if the token is not found or the authorization header is invalid
+     * @param {Object} request The request object
+     * @returns {string} The token
+     */
+    function getAuthToken (request) {
+        if (!request?.headers?.authorization) {
+            throw new Error('Missing authorization header')
+        }
+        const parts = request.headers.authorization.split(' ')
+        if (parts.length !== 2) {
+            throw new Error('Invalid authorization header')
+        }
+        if (parts[0] !== 'Bearer') {
+            throw new Error('Invalid authorization header')
+        }
+        if (!parts[1]) {
+            throw new Error('Invalid authorization header')
+        }
+        return parts[1]
+    }
+
+    /**
+     * Check if the token is in the cache and if it is still valid
+     * @param {string} token The token to check
+     * @param {string} projectId The projectId to check
+     * @returns {boolean} true if the token is valid for the projectId
+     */
+    function checkCache (token, projectId) {
+        const cacheExists = authCache[token] && authCache[token].projectId && authCache[token].ttl
+        let projectMatch = false
+        let ttlOk = false
+        if (cacheExists) {
+            const cacheEntry = authCache[token]
+            // ensure projectId matches the cached projectId
+            projectMatch = cacheEntry.projectId === projectId
+            // check cache ttl
+            ttlOk = (Date.now() - cacheEntry.ttl) < ttl
+        }
+        const result = cacheExists && projectMatch && ttlOk
+        // delete only if expired
+        if (!ttlOk && projectMatch) {
+            delete authCache[token]
+        }
+        return result
+    }
+
     app.decorate('checkAuth', checkAuth)
     done()
 })

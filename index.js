@@ -4,7 +4,7 @@
 const semver = require('semver')
 const flowForgeFileServer = require('./forge/fileServer')
 
-;(async function () {
+const app = (async function () {
     if (!semver.satisfies(process.version, '>=16.0.0')) {
         console.error(`FlowForge File Server requires at least NodeJS v16, ${process.version} found`)
         process.exit(1)
@@ -39,8 +39,11 @@ const flowForgeFileServer = require('./forge/fileServer')
                 process.exit(1)
             }
         })
+        return server
     } catch (err) {
         console.error(err)
         process.exitCode = 1
     }
 })()
+
+module.exports = app
