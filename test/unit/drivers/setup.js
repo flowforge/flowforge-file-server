@@ -23,9 +23,15 @@ module.exports = async function (config = {}, options = {}) {
     const app = {
         config: { ...config },
         options: { ...options },
+        log: {
+            info: () => {},
+            error: () => {},
+            warn: () => {},
+            debug: () => {}
+        },
         cleanUp: function (teamId, projectId) {
-            if (!app.config.driver.root || !app.options.rootPath) {
-                throw new Error('app.config.driver.root must be set')
+            if (!app.config.driver.options.root || !app.options.rootPath) {
+                throw new Error('app.config.driver.options.root must be set')
             }
             app._driver.delete(teamId, projectId, 'test1.txt')
             app._driver.delete(teamId, projectId, 'test2.txt')
@@ -36,18 +42,18 @@ module.exports = async function (config = {}, options = {}) {
         }
     }
     let rootPath
-    if (!app.config.driver.root) {
-        throw new Error('app.config.driver.root must be set')
+    if (!app.config.driver.options.root) {
+        throw new Error('app.config.driver.options.root must be set')
     }
-    if (!isAbsolute(app.config.driver.root)) {
-        rootPath = join(app.config.home, app.config.driver.root)
+    if (!isAbsolute(app.config.driver.options.root)) {
+        rootPath = join(app.config.home, app.config.driver.options.root)
     } else {
-        rootPath = app.config.driver.root
+        rootPath = app.config.driver.options.root
     }
     if (app.config.driver.type === 'localfs') {
         fs.mkdirSync(rootPath, { recursive: true })
     }
-    const createDriver = require('../../../lib/drivers/' + app.config.driver.type)
+    const createDriver = require('../../../forge/drivers/' + app.config.driver.type)
     app._driver = createDriver(app)
 
     app.options.rootPath = rootPath
