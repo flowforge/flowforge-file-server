@@ -1,6 +1,9 @@
 const should = require('should') // eslint-disable-line
 const setup = require('./setup.js')
-const getDriver = require('../../../lib/drivers/vfs')
+const path = require('path')
+const PACKAGE_ROOT = '../../../'
+const FileStorageRequire = file => require(path.join(PACKAGE_ROOT, file))
+const getDriver = FileStorageRequire('forge/drivers/vfs')
 const fs = require('fs')
 const { join, sep: pathSeparator } = require('path')
 
@@ -15,7 +18,9 @@ describe('vfs driver', function () {
                 home: 'var',
                 driver: {
                     type: 'memory',
-                    root: 'tmp'
+                    options: {
+                        root: 'tmp'
+                    }
                 }
             }, {
                 teamId,
@@ -62,7 +67,9 @@ describe('vfs driver', function () {
                 home: 'var',
                 driver: {
                     type: 'localfs',
-                    root: 'tmp'
+                    options: {
+                        root: 'tmp'
+                    }
                 }
             }, {
                 teamId,
@@ -72,7 +79,9 @@ describe('vfs driver', function () {
         })
 
         afterEach(async function () {
-            app.close()
+            if (app) {
+                app.close()
+            }
             vfs = null
         })
 
