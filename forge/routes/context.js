@@ -9,10 +9,6 @@
 /** @typedef {import('fastify').FastifyReply} FastifyReply */
 /** @typedef {import('fastify').FastifyRequest} FastifyRequest */
 
-const util = require('@node-red/util').util
-
-const store = {}
-
 module.exports = async function (app, opts, done) {
     const driver = require('../context-driver/memory.js')
 
