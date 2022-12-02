@@ -4,7 +4,7 @@ const store = {}
 
 module.exports = {
     init: function (options) {},
-    set: function (projectId, scope, input) {
+    set: async function (projectId, scope, input) {
         input.forEach(element => {
             const key = projectId +
                 '.' + scope +
@@ -12,7 +12,7 @@ module.exports = {
             util.setObjectProperty(store, key, element.value)
         })
     },
-    get: function (projectId, scope, keys) {
+    get: async function (projectId, scope, keys) {
         const values = []
         keys.forEach(key => {
             const fullKey = projectId +
@@ -34,13 +34,13 @@ module.exports = {
         })
         return values
     },
-    keys: function (projectId, scope) {
+    keys: async function (projectId, scope) {
         const key = projectId +
             '.' + scope
         const root = util.getObjectProperty(scope, key)
         return Object.keys(root)
     },
-    delete: function (projectId, scope) {
+    delete: async function (projectId, scope) {
         delete store[projectId][scope]
     }
 }
