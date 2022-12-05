@@ -177,7 +177,7 @@ module.exports = {
     clean: async function (projectId, ids) {
         const keys = await client.json.objKeys(projectId)
         // remove global
-        keys.splice(keys.indexOf('global'),1)
+        keys.splice(keys.indexOf('global'), 1)
         const flows = []
         for (const id in ids) {
             if (keys.includes(ids[id])) {
@@ -191,7 +191,7 @@ module.exports = {
         // console.log('nodes', ids)
 
         for (const key in keys) {
-            console.log(`removing dead flow ${keys[key]}`)
+            // console.log(`removing dead flow ${keys[key]}`)
             await client.json.del(projectId, `$.${keys[key]}`)
         }
 
