@@ -129,7 +129,7 @@ module.exports = async function (app, opts, done) {
     app.post('/:projectId/clean', {
 
     }, async (request, reply) => {
-        await driver.clean(request.body)
+        await driver.clean(request.params.projectId, request.body)
         reply.send()
     })
 
