@@ -37,7 +37,17 @@ module.exports = async function (app, opts, done) {
     }, async (request, reply) => {
         const body = request.body
         const projectId = request.params.projectId
-        const scope = request.params.scope
+        let scope = request.params.scope
+        if (scope !== 'global') {
+            console.log('not global', scope.indexOf(':'))
+            if (scope.indexOf(':') !== -1) {
+                const parts = scope.split(':')
+                console.log('colon found', parts)
+                scope = `${parts[1]}.nodes.${parts[0]}`
+            } else {
+                scope = `${scope}.flow`
+            }
+        }
         await driver.set(projectId, scope, body)
         reply.code(200).send({})
     })
@@ -65,7 +75,15 @@ module.exports = async function (app, opts, done) {
     }, async (request, reply) => {
         const keys = request.query.key
         const projectId = request.params.projectId
-        const scope = request.params.scope
+        let scope = request.params.scope
+        if (scope !== 'global') {
+            if (scope.indexOf(':') !== -1) {
+                const parts = scope.split(':')
+                scope = `${parts[1]}.nodes.${parts[0]}`
+            } else {
+                scope = `${scope}.flow`
+            }
+        }
         reply.send(await driver.get(projectId, scope, keys))
     })
 
@@ -108,7 +126,7 @@ module.exports = async function (app, opts, done) {
      * @static
      * @memberof forge.fileserver.context
      */
-    app.post('/:projectId', {
+    app.post('/:projectId/clean', {
 
     }, async (request, reply) => {
         await driver.clean(request.body)
