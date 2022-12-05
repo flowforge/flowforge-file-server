@@ -53,7 +53,8 @@ driver:
     - type - can be `s3`, `localfs` or `memory` (for testing)
     - options - will vary by driver
 
-### S3
+### File Storage
+#### S3
 
 The following can be any of the options for the S3Client Contructor, see [here](https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/clients/client-s3/interfaces/s3clientconfig.html)
 
@@ -81,15 +82,23 @@ driver:
     region: us-east-1
 ```
 
-### LocalFS
+#### LocalFS
 
 - options
     - root - path to store team files, relative path will apply to FLOWFORGE_HOME
 
-### Memory
+#### Memory
 
 This driver is purely to make testing easier, it has no configuration
 options.
+
+### Context Storage
+
+#### Redis
+
+#### Memory
+
+This driver is purely to make testing easier, it has no configuration options.
 
 ### Environment variables
 

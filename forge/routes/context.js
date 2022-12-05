@@ -10,7 +10,9 @@
 /** @typedef {import('fastify').FastifyRequest} FastifyRequest */
 
 module.exports = async function (app, opts, done) {
-    const driver = require('../context-driver/memory.js')
+    const driver = require(`../context-driver/${app.config.context.type}`)
+
+    await driver.init(app.config.context.options)
 
     /**
      * Create/Update key
@@ -36,13 +38,7 @@ module.exports = async function (app, opts, done) {
         const body = request.body
         const projectId = request.params.projectId
         const scope = request.params.scope
-        // body.forEach(element => {
-        //     const key = request.params.projectId +
-        //     '.' + request.params.scope +
-        //     '.' + element.key
-        //     util.setObjectProperty(store, key, element.value)
-        // })
-        driver.set(projectId, scope, body)
+        await driver.set(projectId, scope, body)
         reply.code(200).send({})
     })
 
@@ -67,33 +63,10 @@ module.exports = async function (app, opts, done) {
             }
         }
     }, async (request, reply) => {
-        console.log(request.query)
         const keys = request.query.key
         const projectId = request.params.projectId
         const scope = request.params.scope
-        // const values = []
-        // keys.forEach(key => {
-        //     const fullkey = request.params.projectId +
-        //     '.' + request.params.scope +
-        //     '.' + key
-        //     try {
-        //         const value = util.getObjectProperty(store, fullkey)
-        //         const ret = {
-        //             key,
-        //             value
-        //         }
-        //         values.push(ret)
-        //     } catch (err) {
-        //         if (err.type === 'TypeError') {
-        //             // reply.code(404).send()
-        //             values.push({
-        //                 key
-        //             })
-        //         }
-        //         // return false
-        //     }
-        // })
-        reply.send(driver.get(projectId, scope, keys))
+        reply.send(await driver.get(projectId, scope, keys))
     })
 
     /**
@@ -106,12 +79,9 @@ module.exports = async function (app, opts, done) {
     app.get('/:projectId/:scope/keys', {
 
     }, async (request, reply) => {
-        // const key = request.params.projectId +
-        //     '.' + request.params.scope
-        // const root = util.getObjectProperty(store, key)
         const projectId = request.params.projectId
         const scope = request.params.scope
-        reply.send(driver.keys(projectId, scope))
+        reply.send(await driver.keys(projectId, scope))
     })
 
     /**
@@ -127,7 +97,21 @@ module.exports = async function (app, opts, done) {
         // delete store[request.params.projectId][request.params.store]
         const projectId = request.params.projectId
         const scope = request.params.scope
-        driver.delete(projectId, scope)
+        await driver.delete(projectId, scope)
+        reply.send()
+    })
+
+    /**
+     * Clean up
+     *
+     * @name /v1/context/:projectId
+     * @static
+     * @memberof forge.fileserver.context
+     */
+    app.post('/:projectId', {
+
+    }, async (request, reply) => {
+        await driver.clean(request.body)
         reply.send()
     })
 

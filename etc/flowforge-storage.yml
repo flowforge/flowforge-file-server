@@ -15,3 +15,5 @@ driver:
   #   endpoint: http://localhost:9000
   #   forcePathStyle: true
   #   region: eu-west-1
+context:
+  type: memory
