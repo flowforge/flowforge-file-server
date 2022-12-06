@@ -90,7 +90,7 @@ module.exports = async function (app, opts, done) {
     /**
      * Get keys
      *
-     * @name /v1/context/:projectId/:scope
+     * @name /v1/context/:projectId/:scope/keys
      * @static
      * @memberof forge.fileserver.context
      */

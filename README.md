@@ -5,6 +5,8 @@
 All requests should include a `Authorization` header with a Bearer token assigned by the FlowForge platform to identify
 ## End Points
 
+### File Storage
+
 - Create/Replace
 
     **POST** */v1/files/:teamId/:projectId/[path and filename]*
@@ -33,6 +35,48 @@ All requests should include a `Authorization` header with a Bearer token assigne
     **GET** */v1/quota/:teamId*
 
     Content-Type: application/json
+
+### Context Store
+
+- Get stored values
+
+    **GET** */v1/context/:projectId/:scope?key=x[&key=y.y]*
+
+    Content-Type: application/json
+
+- Set stored values
+
+    **POST** */v1/context/:projectId/:scope*
+
+    Content-Type: application/json
+
+    ```
+    [
+        { key: "a.b.c", value: { foo: 'bar' } }
+    ]
+    ```
+
+- Get keys for a scope
+
+    **GET** */v1/context/:projectId/:scope/keys*
+
+    Content-Type: application/json
+
+- Delete scope
+
+    **DELETE** */v1/context/:projectId/:scope*
+
+- Clean unused scopes from the store
+
+    **POST** */v1/context/:projectId/clean*
+
+    Content-Type: application/json
+
+    ```
+    [
+        'nodeId', 'flowId'
+    ]
+    ```
 
 ## Configuration
 
@@ -96,6 +140,40 @@ options.
 
 #### Redis
 
+This driver requires an instance of Redis with the RedisJSON enabled e.g. the `redislabs/rejson` docker container
+
+```
+context:
+  type: redis
+  options:
+    urls: redis://localhost:6379
+```
+
+#### PostgreSQL
+
+This driver uses a PostgreSQL database to hold the context values.
+
+It expects the following table to be present in the database
+
+```sql
+CREATE TABLE "context" (
+    project varchar(128) not NULL,
+    scope   varchar(128) not NULL,
+    values  json not NULL,
+    CONSTRAINT onlyone UNIQUE(project, scope)
+);
+```
+
+```
+context:
+  type: postgres
+  options:
+    port: 54321
+    host: localhost
+    database: ff-context
+    user: flowforge
+    password: secert
+```
 #### Memory
 
 This driver is purely to make testing easier, it has no configuration options.
