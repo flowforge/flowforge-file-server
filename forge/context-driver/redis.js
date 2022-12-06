@@ -72,7 +72,11 @@ async function recursiveInsert (projectId, scope, path, value) {
                 existing = value
             }
             // console.log('after', existing)
-            await client.json.set(projectId, `$.${scope}.${path}`, existing, { XX: true })
+            if (existing === undefined) {
+                await client.json.del(projectId, `$.${scope}.${path}`)
+            } else {
+                await client.json.set(projectId, `$.${scope}.${path}`, existing, { XX: true })
+            }
         } else {
             // console.log(path, value)
             const response = await client.json.set(projectId, `$.${scope}.${path}`, value, { XX: true })
