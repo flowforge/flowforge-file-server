@@ -119,7 +119,9 @@ module.exports = {
     },
     set: async function (projectId, scope, input) {
         // console.log('set scope', scope)
+        const startScope = scope
         for (const i in input) {
+            scope = startScope
             let path = input[i].key
             if (scope !== 'global') {
                 if (scope.indexOf('.') !== -1) {
