@@ -66,7 +66,9 @@ module.exports = {
         console.log(store)
         console.log(projectId, ids)
         const keys = Object.keys(store[projectId])
-        keys.splice(keys.indexOf('global'), 1)
+        if (keys.includes('global')) {
+            keys.splice(keys.indexOf('global'), 1)
+        }
         const flows = []
         for (const id in ids) {
             if (keys.includes(ids[id])) {

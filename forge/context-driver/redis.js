@@ -190,7 +190,9 @@ module.exports = {
     clean: async function (projectId, ids) {
         const keys = await client.json.objKeys(projectId)
         // remove global
-        keys.splice(keys.indexOf('global'), 1)
+        if (keys.includes('global')) {
+            keys.splice(keys.indexOf('global'), 1)
+        }
         const flows = []
         for (const id in ids) {
             if (keys.includes(ids[id])) {
