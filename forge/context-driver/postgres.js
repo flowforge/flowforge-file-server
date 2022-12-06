@@ -74,18 +74,36 @@ module.exports = {
     clean: async function (projectId, ids) {
         const scopesResults = await pool.query(SCOPES, [projectId])
         const scopes = scopesResults.rows.map(s => s.scope)
-        scopes.splice(scopes.indexOf('global'))
-        console.log('original', scopes)
-        const keep = []
+        if (scopes.includes('global')) {
+            scopes.splice(scopes.indexOf('global'))
+        }
+        if (scopes.length === 0) {
+            return
+        }
+        // console.log('original', scopes)
+        const keepFlows = []
+        const keepNodes = []
         for (const i in ids) {
             const id = ids[i]
             for (const s in scopes) {
                 const scope = scopes[s]
-                if (scope.includes(id)) {
-                    keep.push(scope)
+                if (scope.startsWith(`${id}.flow`)) {
+                    keepFlows.push(scope)
+                } else if (scope.endsWith(`nodes.${id}`)) {
+                    keepNodes.push(scope)
                 }
             }
         }
-        console.log('keep',keep)
+        // console.log('keepFlows', keepFlows)
+        // console.log('keepNodes', keepNodes)
+        for (const s in scopes) {
+            const scope = scopes[s]
+            if (keepFlows.includes(scope) || keepNodes.includes(scope)) {
+                continue
+            } else {
+                // console.log('remove ', scope)
+                await pool.query(DEL, [projectId, scope])
+            }
+        }
     }
 }
