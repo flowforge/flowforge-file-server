@@ -10,17 +10,15 @@
 /** @typedef {import('fastify').FastifyRequest} FastifyRequest */
 
 const util = require('@node-red/util').util
-const VALID_SCOPES = ['context', 'flow', 'global']
+// const VALID_SCOPES = ['context', 'flow', 'global']
 const store = {}
 
 module.exports = async function (app, opts, done) {
     app.addHook('preHandler', async (request, reply) => {
         if (!request.params.projectId) {
             reply.code(404).send({ code: 'invalid_project', error: 'Project ID Missing' })
-        } else if (!request.params.scope) {
+        } else if (!request.params.scope && request.routeConfig?.name !== 'clean') {
             reply.code(404).send({ code: 'invalid_scope', error: 'Scope missing' })
-        } else if (VALID_SCOPES.includes(request.params.scope) === false) {
-            reply.code(404).send({ code: 'invalid_scope', error: 'Scope not valid' })
         }
     })
 
@@ -47,6 +45,43 @@ module.exports = async function (app, opts, done) {
             '.' + request.params.scope +
             '.' + element.key
             util.setObjectProperty(store, key, element.value)
+        })
+        reply.code(200).send({})
+    })
+
+    /**
+     * Clean
+     * @name /v1/context/:projectId/clean
+     * @static
+     * @memberof forge.fileserver.context
+     */
+    app.post('/:projectId/clean', {
+        config: {
+            name: 'clean'
+        },
+        schema: {
+            body: {
+                type: 'array',
+                items: {
+                    type: 'string'
+                }
+            }
+        }
+    }, async (request, reply) => {
+        const activeNodes = request.body || []
+        activeNodes.forEach(element => {
+            const [scope, flowId] = element.split(':')
+            const key = request.params.projectId +
+            '.' + scope + (flowId ? '.' + flowId : '')
+            let exists = false
+            try {
+                exists = util.getObjectProperty(store, key) !== undefined
+            } catch (err) {
+                // no error
+            }
+            if (!exists) {
+                util.setObjectProperty(store, key, undefined)
+            }
         })
         reply.code(200).send({})
     })
@@ -99,9 +134,6 @@ module.exports = async function (app, opts, done) {
     app.get('/:projectId/:scope/keys', {
 
     }, async (request, reply) => {
-        if (!VALID_SCOPES.includes(request.params.scope)) {
-            reply.code(400).send({ code: 'bad_request', error: 'invalid scope' })
-        }
         const key = request.params.projectId +
             '.' + request.params.scope
         let root = {}
@@ -110,7 +142,7 @@ module.exports = async function (app, opts, done) {
         } catch (err) {
             // no error
         }
-        return reply.send(Object.keys(root))
+        reply.send(Object.keys(root))
     })
 
     /**
