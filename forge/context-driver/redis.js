@@ -79,17 +79,21 @@ async function recursiveInsert (projectId, scope, path, value) {
             }
         } else {
             // console.log(path, value)
-            const response = await client.json.set(projectId, `$.${scope}.${path}`, value, { XX: true })
-            if (!response) {
-                const parts = path.split('.')
-                const top = parts.pop()
-                const shortPath = parts.join('.')
-                const wrappedValue = {}
-                util.setObjectProperty(wrappedValue, top, value)
-                if (parts.length !== 0) {
-                    await recursiveInsert(projectId, scope, shortPath, wrappedValue)
-                } else {
-                    await client.json.set(projectId, `$.${scope}.${top}`, value)
+            if (value === undefined) {
+                await client.json.del(projectId, `$.${scope}.${path}`)
+            } else {
+                const response = await client.json.set(projectId, `$.${scope}.${path}`, value, { XX: true })
+                if (!response) {
+                    const parts = path.split('.')
+                    const top = parts.pop()
+                    const shortPath = parts.join('.')
+                    const wrappedValue = {}
+                    util.setObjectProperty(wrappedValue, top, value)
+                    if (parts.length !== 0) {
+                        await recursiveInsert(projectId, scope, shortPath, wrappedValue)
+                    } else {
+                        await client.json.set(projectId, `$.${scope}.${top}`, value)
+                    }
                 }
             }
         }
