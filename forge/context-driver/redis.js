@@ -168,7 +168,16 @@ module.exports = {
         return values
     },
     keys: async function (projectId, scope) {
-        const keys = await client.json.objKeys(projectId, '$.' + scope)
+        if (scope !== 'global') {
+            if (scope.indexOf(':') !== -1) {
+                const parts = scope.split(':')
+                scope = `${parts[1]}.nodes.${parts[0]}`
+            } else {
+                scope = `${scope}.flow`
+            }
+        }
+        const keys = (await client.json.objKeys(projectId, '$.' + scope))[0]
+        console.log(scope, keys)
         return keys
     },
     delete: async function (projectId, scope) {
