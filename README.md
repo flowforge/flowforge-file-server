@@ -38,21 +38,31 @@ All requests should include a `Authorization` header with a Bearer token assigne
 
 ### Context Store
 
-- Get stored values
-
-    **GET** */v1/context/:projectId/:scope?key=x[&key=y.y]*
-
-    Content-Type: application/json
-
 - Set stored values
 
     **POST** */v1/context/:projectId/:scope*
 
     Content-Type: application/json
 
+    Body:
     ```
     [
-        { key: "a.b.c", value: { foo: 'bar' } }
+        { key: "x", value: { foo: 'bar' } },
+        { key: "y.y", value: 100 },
+    ]
+    ```
+
+- Get stored values
+
+    **GET** */v1/context/:projectId/:scope?key=x[&key=y.y]*
+
+    Content-Type: application/json
+
+    Response:
+    ```
+    [
+        { key: 'x', value: { foo: 'bar' } },
+        { key: 'y.y', value: 100 }
     ]
     ```
 
@@ -61,6 +71,14 @@ All requests should include a `Authorization` header with a Bearer token assigne
     **GET** */v1/context/:projectId/:scope/keys*
 
     Content-Type: application/json
+
+    Response:
+    ```
+    [
+        'x',
+        'y'
+    ]
+    ```
 
 - Delete scope
 
@@ -72,6 +90,7 @@ All requests should include a `Authorization` header with a Bearer token assigne
 
     Content-Type: application/json
 
+    Body:
     ```
     [
         'nodeId', 'flowId'
