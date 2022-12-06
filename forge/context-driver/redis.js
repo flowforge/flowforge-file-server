@@ -54,7 +54,7 @@ async function recursiveInsert (projectId, scope, path, value) {
         if (count.length) {
             let existing = (await client.json.get(projectId, { path: [`$.${scope}.${path}`] }))[0]
             // console.log('before', existing)
-            if (typeof existing === 'object') {
+            if (typeof existing === 'object' && existing !== null) {
                 if (Array.isArray(existing)) {
                     existing = value
                 } else {
