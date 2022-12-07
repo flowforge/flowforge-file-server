@@ -5,6 +5,8 @@
 All requests should include a `Authorization` header with a Bearer token assigned by the FlowForge platform to identify
 ## End Points
 
+### File Storage
+
 - Create/Replace
 
     **POST** */v1/files/:teamId/:projectId/[path and filename]*
@@ -34,6 +36,67 @@ All requests should include a `Authorization` header with a Bearer token assigne
 
     Content-Type: application/json
 
+### Context Store
+
+- Set stored values
+
+    **POST** */v1/context/:projectId/:scope*
+
+    Content-Type: application/json
+
+    Body:
+    ```
+    [
+        { key: "x", value: { foo: 'bar' } },
+        { key: "y.y", value: 100 },
+    ]
+    ```
+
+- Get stored values
+
+    **GET** */v1/context/:projectId/:scope?key=x[&key=y.y]*
+
+    Content-Type: application/json
+
+    Response:
+    ```
+    [
+        { key: 'x', value: { foo: 'bar' } },
+        { key: 'y.y', value: 100 }
+    ]
+    ```
+
+- Get keys for a scope
+
+    **GET** */v1/context/:projectId/:scope/keys*
+
+    Content-Type: application/json
+
+    Response:
+    ```
+    [
+        'x',
+        'y'
+    ]
+    ```
+
+- Delete scope
+
+    **DELETE** */v1/context/:projectId/:scope*
+
+- Clean unused scopes from the store
+
+    **POST** */v1/context/:projectId/clean*
+
+    Content-Type: application/json
+
+    Body:
+    ```
+    [
+        'nodeId', 'flowId'
+    ]
+    ```
+
 ## Configuration
 
 Configuration is read from `etc/flowforge-storage.yml`
@@ -53,7 +116,8 @@ driver:
     - type - can be `s3`, `localfs` or `memory` (for testing)
     - options - will vary by driver
 
-### S3
+### File Storage
+#### S3
 
 The following can be any of the options for the S3Client Contructor, see [here](https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/clients/client-s3/interfaces/s3clientconfig.html)
 
@@ -81,15 +145,57 @@ driver:
     region: us-east-1
 ```
 
-### LocalFS
+#### LocalFS
 
 - options
     - root - path to store team files, relative path will apply to FLOWFORGE_HOME
 
-### Memory
+#### Memory
 
 This driver is purely to make testing easier, it has no configuration
 options.
+
+### Context Storage
+
+#### Redis
+
+This driver requires an instance of Redis with the RedisJSON enabled e.g. the `redislabs/rejson` docker container
+
+```
+context:
+  type: redis
+  options:
+    urls: redis://localhost:6379
+```
+
+#### PostgreSQL
+
+This driver uses a PostgreSQL database to hold the context values.
+
+It expects the following table to be present in the database
+
+```sql
+CREATE TABLE "context" (
+    project varchar(128) not NULL,
+    scope   varchar(128) not NULL,
+    values  json not NULL,
+    CONSTRAINT onlyone UNIQUE(project, scope)
+);
+```
+
+```
+context:
+  type: postgres
+  options:
+    port: 54321
+    host: localhost
+    database: ff-context
+    user: flowforge
+    password: secert
+```
+#### Memory
+
+This driver is purely to make testing easier, it has no configuration options.
 
 ### Environment variables
 
