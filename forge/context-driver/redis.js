@@ -54,7 +54,7 @@ async function recursiveInsert (projectId, scope, path, value) {
         if (count.length) {
             let existing = (await client.json.get(projectId, { path: [`$.${scope}.${path}`] }))[0]
             // console.log('before', existing)
-            if (typeof existing === 'object') {
+            if (typeof existing === 'object' && existing !== null) {
                 if (Array.isArray(existing)) {
                     existing = value
                 } else {
@@ -142,38 +142,19 @@ module.exports = {
             // console.log('get', scope, key)
             paths.push(`${scope}.${key}`)
         })
-        try {
-            const response = await client.json.get(projectId, { path: paths })
-            if (response) {
-                if (paths.length === 1) {
-                    const key = paths[0].substring(scope.length + 1)
-                    values.push({
-                        key,
-                        value: response
-                    })
-                } else {
-                    Object.keys(response).forEach(k => {
-                        // console.log(k)
-                        const key = k.substring(scope.length + 1)
-                        const value = response[k]
-                        values.push({
-                            key,
-                            value
-                        })
-                    })
+        for (let index = 0; index < paths.length; index++) {
+            const path = paths[index]
+            const key = path.substring(scope.length + 1)
+            const result = { key }
+            try {
+                const response = await client.json.get(projectId, { path })
+                if (response !== undefined) {
+                    result.value = response
                 }
-            } else {
-                paths.forEach(k => {
-                    const parts = k.split('.')
-                    parts.shift()
-                    const key = parts.join('.')
-                    values.push({
-                        key
-                    })
-                })
+            } catch (err) {
+                // console.log('get err', err)
             }
-        } catch (err) {
-            console.log(err)
+            values.push(result)
         }
         return values
     },
