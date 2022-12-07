@@ -39,10 +39,8 @@ module.exports = async function (app, opts, done) {
         const projectId = request.params.projectId
         let scope = request.params.scope
         if (scope !== 'global') {
-            console.log('not global', scope.indexOf(':'))
             if (scope.indexOf(':') !== -1) {
                 const parts = scope.split(':')
-                console.log('colon found', parts)
                 scope = `${parts[1]}.nodes.${parts[0]}`
             } else {
                 scope = `${scope}.flow`

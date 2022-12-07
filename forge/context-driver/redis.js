@@ -16,16 +16,13 @@ async function createScopeIfNeeded (projectId, scope) {
                 flow: {}
             })
         }
-        // console.log('new project', scope, start)
         try {
             await client.json.set(projectId, '$', start)
         } catch (err) {
-            // console.log("ben")
         }
     } else {
         const scopes = (await client.json.objKeys(projectId, '$'))[0]
         if (!scopes.includes(scope)) {
-            // console.log('new scope', scopes, scope)
             const start = {}
             if (scope !== 'global') {
                 const parts = scope.split('.')
@@ -38,22 +35,16 @@ async function createScopeIfNeeded (projectId, scope) {
             try {
                 await client.json.set(projectId, `$.${scope}`, start)
             } catch (err) {
-                // console.log('ben', err)
             }
-        } else {
-            // console.log('scope already exists')
         }
     }
 }
 
 async function recursiveInsert (projectId, scope, path, value) {
-    // console.log('insert', scope, path, value)
     try {
         const count = await client.json.objLen(projectId, `$.${scope}.${path}`)
-        // console.log('count', `$.${scope}.${path}`, count.length)
         if (count.length) {
             let existing = (await client.json.get(projectId, { path: [`$.${scope}.${path}`] }))[0]
-            // console.log('before', existing)
             if (typeof existing === 'object' && existing !== null) {
                 if (Array.isArray(existing)) {
                     existing = value
@@ -71,14 +62,12 @@ async function recursiveInsert (projectId, scope, path, value) {
             } else {
                 existing = value
             }
-            // console.log('after', existing)
             if (existing === undefined) {
                 await client.json.del(projectId, `$.${scope}.${path}`)
             } else {
                 await client.json.set(projectId, `$.${scope}.${path}`, existing, { XX: true })
             }
         } else {
-            // console.log(path, value)
             if (value === undefined) {
                 await client.json.del(projectId, `$.${scope}.${path}`)
             } else {
@@ -114,11 +103,9 @@ module.exports = {
         })
 
         client.on('connect', () => {
-            console.log('redis client connected')
         })
     },
     set: async function (projectId, scope, input) {
-        // console.log('set scope', scope)
         const startScope = scope
         for (const i in input) {
             scope = startScope
@@ -131,7 +118,6 @@ module.exports = {
                 }
             }
             await createScopeIfNeeded(projectId, scope)
-            // console.log('----', scope, path)
             await recursiveInsert(projectId, scope, path, input[i].value)
         }
     },
@@ -139,7 +125,6 @@ module.exports = {
         const values = []
         const paths = []
         keys.forEach(key => {
-            // console.log('get', scope, key)
             paths.push(`${scope}.${key}`)
         })
         for (let index = 0; index < paths.length; index++) {
@@ -168,7 +153,6 @@ module.exports = {
             }
         }
         const keys = (await client.json.objKeys(projectId, '$.' + scope))[0]
-        console.log(scope, keys)
         return keys
     },
     delete: async function (projectId, scope) {
@@ -191,24 +175,17 @@ module.exports = {
                 keys.splice(keys.indexOf(ids[id]), 1)
             }
         }
-        // console.log('live flows', flows)
-        // console.log('dead flows', keys)
-        // console.log('nodes', ids)
 
         for (const key in keys) {
-            // console.log(`removing dead flow ${keys[key]}`)
             await client.json.del(projectId, `$.${keys[key]}`)
         }
 
         for (const flowId in flows) {
             const flow = flows[flowId]
             const nodes = (await client.json.objKeys(projectId, `$.${flow}.nodes`))[0]
-            // console.log(`context for nodes on flow ${flow}`, nodes)
             for (const nodeId in nodes) {
                 const node = nodes[nodeId]
-                // console.log(`checking node ${node} still exists`)
                 if (!ids.includes(node)) {
-                    // console.log(`node ${node} on flow ${flow} not in list`)
                     await client.json.del(projectId, `$.${flow}.nodes.${node}`)
                 } else {
                     // console.log('yes')

@@ -35,8 +35,6 @@ module.exports = {
         return values
     },
     keys: async function (projectId, scope) {
-        console.log('keys scope', scope)
-        console.log(JSON.stringify(store, null, ' '))
         if (scope !== 'global') {
             if (scope.indexOf(':') !== -1) {
                 const parts = scope.split(':')
@@ -45,11 +43,9 @@ module.exports = {
                 scope = `${scope}.flow`
             }
         }
-        console.log(scope)
         try {
             const root = util.getObjectProperty(store[projectId], scope)
             if (root) {
-                console.log(Object.keys(root))
                 return Object.keys(root)
             } else {
                 return []
@@ -63,8 +59,6 @@ module.exports = {
         delete store[projectId][scope]
     },
     clean: async function (projectId, ids) {
-        console.log(store)
-        console.log(projectId, ids)
         const keys = Object.keys(store[projectId])
         if (keys.includes('global')) {
             keys.splice(keys.indexOf('global'), 1)
@@ -80,27 +74,18 @@ module.exports = {
                 keys.splice(keys.indexOf(ids[id]), 1)
             }
         }
-        console.log('live flows', flows)
-        console.log('dead flows', keys)
-        console.log('nodes', ids)
 
         for (const key in keys) {
-            console.log(`removing dead flow ${keys[key]}`)
             delete store[projectId][keys[key]]
         }
 
         for (const flowId in flows) {
             const flow = flows[flowId]
-            const nodes = Object.keys(store[projectId].nodes)
-            console.log(`context for nodes on flow ${flow}`, nodes)
+            const nodes = Object.keys(store[projectId][flow].nodes)
             for (const nodeId in nodes) {
                 const node = nodes[nodeId]
-                console.log(`checking node ${node} still exists`)
                 if (!ids.includes(node)) {
-                    console.log(`node ${node} on flow ${flow} not in list`)
                     delete store[projectId].nodes[node]
-                } else {
-                    console.log('yes')
                 }
             }
         }

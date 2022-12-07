@@ -24,7 +24,6 @@ module.exports = {
     },
     set: async function (projectId, scope, input) {
         const existing = await pool.query(SELECT, [projectId, scope])
-        console.log(existing.rows)
         let start = {}
         if (existing.rows[0]) {
             start = existing.rows[0].values
@@ -34,7 +33,6 @@ module.exports = {
             const value = input[i].value
             util.setMessageProperty(start, path, value)
         }
-        console.log(start)
         await pool.query(INSERT, [projectId, scope, start])
     },
     get: async function (projectId, scope, keys) {
@@ -80,7 +78,6 @@ module.exports = {
         if (scopes.length === 0) {
             return
         }
-        // console.log('original', scopes)
         const keepFlows = []
         const keepNodes = []
         for (const i in ids) {
@@ -94,14 +91,11 @@ module.exports = {
                 }
             }
         }
-        // console.log('keepFlows', keepFlows)
-        // console.log('keepNodes', keepNodes)
         for (const s in scopes) {
             const scope = scopes[s]
             if (keepFlows.includes(scope) || keepNodes.includes(scope)) {
                 continue
             } else {
-                // console.log('remove ', scope)
                 await pool.query(DEL, [projectId, scope])
             }
         }
