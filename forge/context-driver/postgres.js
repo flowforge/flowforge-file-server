@@ -73,7 +73,7 @@ module.exports = {
         const scopesResults = await pool.query(SCOPES, [projectId])
         const scopes = scopesResults.rows.map(s => s.scope)
         if (scopes.includes('global')) {
-            scopes.splice(scopes.indexOf('global'))
+            scopes.splice(scopes.indexOf('global'), 1)
         }
         if (scopes.length === 0) {
             return
