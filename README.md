@@ -45,7 +45,7 @@ All requests should include a `Authorization` header with a Bearer token assigne
     Content-Type: application/json
 
     Body:
-    ```
+    ```json
     [
         { key: "x", value: { foo: 'bar' } },
         { key: "y.y", value: 100 },
@@ -59,7 +59,7 @@ All requests should include a `Authorization` header with a Bearer token assigne
     Content-Type: application/json
 
     Response:
-    ```
+    ```json
     [
         { key: 'x', value: { foo: 'bar' } },
         { key: 'y.y', value: 100 }
@@ -73,7 +73,7 @@ All requests should include a `Authorization` header with a Bearer token assigne
     Content-Type: application/json
 
     Response:
-    ```
+    ```json
     [
         'x',
         'y'
@@ -91,7 +91,7 @@ All requests should include a `Authorization` header with a Bearer token assigne
     Content-Type: application/json
 
     Body:
-    ```
+    ```json
     [
         'nodeId', 'flowId'
     ]
@@ -101,7 +101,7 @@ All requests should include a `Authorization` header with a Bearer token assigne
 
 Configuration is read from `etc/flowforge-storage.yml`
 
-```
+```yaml
 host: 0.0.0.0
 port: 3001
 base_url: http://flowforge:3000
@@ -130,7 +130,7 @@ The following can be any of the options for the S3Client Contructor, see [here](
         - accessKeyId - AccountID/Username
         - secretAccessKey - SecretKey/Password
 
-```
+```yaml
 host: '0.0.0.0'
 port: 3001
 base_url: http://forge.default
@@ -161,7 +161,7 @@ options.
 
 This driver requires an instance of Redis with the RedisJSON enabled e.g. the `redislabs/rejson` docker container
 
-```
+```yaml
 context:
   type: redis
   options:
@@ -172,6 +172,11 @@ context:
 
 This driver uses a PostgreSQL database to hold the context values.
 
+If necessary, create the context DB
+```bash
+createdb -U flowforge -W -p 54321 ff-context
+```
+
 It expects the following table to be present in the database
 
 ```sql
@@ -179,11 +184,11 @@ CREATE TABLE "context" (
     project varchar(128) not NULL,
     scope   varchar(128) not NULL,
     values  json not NULL,
-    CONSTRAINT onlyone UNIQUE(project, scope)
+    CONSTRAINT "context-project-scope-unique" UNIQUE(project, scope)
 );
 ```
 
-```
+```yaml
 context:
   type: postgres
   options:
@@ -191,8 +196,9 @@ context:
     host: localhost
     database: ff-context
     user: flowforge
-    password: secert
+    password: secret
 ```
+
 #### Memory
 
 This driver is purely to make testing easier, it has no configuration options.
