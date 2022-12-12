@@ -47,8 +47,8 @@ All requests should include a `Authorization` header with a Bearer token assigne
     Body:
     ```json
     [
-        { key: "x", value: { foo: "bar" } },
-        { key: "y.y", value: 100 },
+        { "key": "x", "value": { "foo": "bar" } },
+        { "key": "y.y", "value": 100 },
     ]
     ```
 
