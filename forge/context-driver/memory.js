@@ -25,11 +25,12 @@ module.exports = {
                     value
                 })
             } catch (err) {
-                if (err.type === 'TypeError') {
-                    values.push({
-                        key
-                    })
+                if (err.code === 'INVALID_EXPR') {
+                    throw err
                 }
+                values.push({
+                    key
+                })
             }
         })
         return values
