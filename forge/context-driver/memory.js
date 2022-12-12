@@ -52,7 +52,6 @@ module.exports = {
                 return []
             }
         } catch (eee) {
-            console.log(eee)
             return []
         }
     },
