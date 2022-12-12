@@ -93,7 +93,7 @@ async function recursiveInsert (projectId, scope, path, value) {
 
 module.exports = {
     init: async function (app) {
-        const url = app.config.context.options.url || 'redis://localhost:6379'
+        const url = app.config.context.options?.url || 'redis://localhost:6379'
         client = redis.createClient({
             url
         })
