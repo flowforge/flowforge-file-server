@@ -13,7 +13,9 @@ describe('localfs driver', function () {
             home: 'var',
             driver: {
                 type: 'localfs',
-                root: 'tmp'
+                options: {
+                    root: 'tmp'
+                }
             }
         }, {
             teamId,
