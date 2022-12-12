@@ -56,7 +56,9 @@ module.exports = {
         }
     },
     delete: async function (projectId, scope) {
-        delete store[projectId][scope]
+        if (store[projectId]?.[scope]) {
+            delete store[projectId][scope]
+        }
     },
     clean: async function (projectId, ids) {
         const keys = Object.keys(store[projectId])
