@@ -45,7 +45,7 @@ module.exports = async function (app, opts, done) {
             } else if (request.headers.ff_mode === 'ensureDir') {
                 await request.vfs.ensureDir(path, request.body)
             } else {
-                // should check if file exists first
+                // should really check if file exists first and compute the delta
                 if (quota !== -1) {
                     const newSize = quota + request.body.size
                     if (newSize < app.config.driver.quota) {
