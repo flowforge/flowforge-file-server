@@ -47,7 +47,7 @@ All requests should include a `Authorization` header with a Bearer token assigne
     Body:
     ```json
     [
-        { key: "x", value: { foo: 'bar' } },
+        { key: "x", value: { foo: "bar" } },
         { key: "y.y", value: 100 },
     ]
     ```
@@ -61,8 +61,8 @@ All requests should include a `Authorization` header with a Bearer token assigne
     Response:
     ```json
     [
-        { key: 'x', value: { foo: 'bar' } },
-        { key: 'y.y', value: 100 }
+        { "key": "x", "value": { "foo": "bar" } },
+        { "key": "y.y", "value": 100 }
     ]
     ```
 
@@ -75,8 +75,8 @@ All requests should include a `Authorization` header with a Bearer token assigne
     Response:
     ```json
     [
-        'x',
-        'y'
+        "x",
+        "y"
     ]
     ```
 
@@ -93,7 +93,7 @@ All requests should include a `Authorization` header with a Bearer token assigne
     Body:
     ```json
     [
-        'nodeId', 'flowId'
+        "nodeId", "flowId"
     ]
     ```
 
