@@ -60,8 +60,9 @@ module.exports = {
             delete store[projectId][scope]
         }
     },
-    clean: async function (projectId, ids) {
-        const keys = Object.keys(store[projectId])
+    clean: async function (projectId, activeIds) {
+        activeIds = activeIds || []
+        const keys = Object.keys(store[projectId] || {})
         if (keys.includes('global')) {
             keys.splice(keys.indexOf('global'), 1)
         }
@@ -69,21 +70,28 @@ module.exports = {
             return
         }
         const flows = []
-        for (const id in ids) {
-            if (keys.includes(ids[id])) {
-                flows.push(ids[id])
-                ids.splice(id, 1)
-                keys.splice(keys.indexOf(ids[id]), 1)
+        const ids = []
+        for (let idx = 0; idx < activeIds.length; idx++) {
+            const id = activeIds[idx]
+            const keyIdx = keys.indexOf(id)
+            if (keyIdx >= 0) {
+                flows.push(id)
+                keys.splice(keyIdx, 1)
+            } else {
+                ids.push(id)
             }
         }
 
-        for (const key in keys) {
-            delete store[projectId][keys[key]]
+        for (let idx = 0; idx < keys.length; idx++) {
+            const key = keys[idx]
+            if (store[projectId]?.[key]) {
+                delete store[projectId][key]
+            }
         }
 
-        for (const flowId in flows) {
-            const flow = flows[flowId]
-            const nodes = Object.keys(store[projectId][flow].nodes)
+        for (let idx = 0; idx < flows.length; idx++) {
+            const flow = flows[idx]
+            const nodes = Object.keys(store[projectId]?.[flow]?.nodes || {}) || []
             for (const nodeId in nodes) {
                 const node = nodes[nodeId]
                 if (!ids.includes(node)) {
