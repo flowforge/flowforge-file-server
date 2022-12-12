@@ -190,7 +190,7 @@ To use with SQLite configure as follows:
 
 ```yaml
 context:
-  type: squelize
+  type: sequelize
   options:
     type: sqlite
     storage: ff-context.db
