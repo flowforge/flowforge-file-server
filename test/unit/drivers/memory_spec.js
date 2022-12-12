@@ -11,7 +11,9 @@ describe('memory driver', function () {
             home: 'var',
             driver: {
                 type: 'memory',
-                root: 'tmp'
+                options: {
+                    root: 'tmp'
+                }
             }
         }, {
             teamId,

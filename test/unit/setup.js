@@ -1,3 +1,4 @@
+const flowForgeFileServer = require('../../forge/fileServer')
 const path = require('path')
 const PACKAGE_ROOT = '../../'
 const FileStorageRequire = file => require(path.join(PACKAGE_ROOT, file))
@@ -43,21 +44,51 @@ function authServer (config = {}) {
 }
 
 async function setupApp (config = {}) {
-    process.env.FF_FS_TEST_CONFIG = `
-FLOWFORGE_HOME: ${config.home || process.cwd()}
-FLOWFORGE_PROJECT_ID: ${config.projectId || 'test-project'}
-FLOWFORGE_TEAM_ID: ${config.teamId || 'test-team'}
-host: ${config.host || '0.0.0.0'}
-port: ${config.port || 3001}
-base_url: 'http://localhost:3002'
-driver:
-    type: memory
-    options:
-        root: /var/root
-`
+    config = config || {}
+    const options = { }
+    options.config = {
+        FLOWFORGE_HOME: config.home || process.cwd(),
+        FLOWFORGE_PROJECT_ID: config.projectId || 'test-project',
+        FLOWFORGE_TEAM_ID: config.teamId || 'test-team',
+        host: config.host || '0.0.0.0',
+        port: config.port || 3001,
+        base_url: config.base_url || 'http://localhost:3002',
+        driver: {
+            type: config.fileDriverType || 'memory',
+            options: config.fileDriverOptions || {
+                root: '/var/root'
+            }
+        },
+        context: {
+            type: config.contextDriver || 'memory',
+            options: config.contextDriverOptions
+        }
+    }
+    const server = await flowForgeFileServer(options)
+    let stopping = false
+    async function exitWhenStopped () {
+        if (!stopping) {
+            stopping = true
+            await server.close()
+        }
+    }
 
-    const app = await FileStorageRequire('index.js')
-    return app
+    process.on('SIGINT', exitWhenStopped)
+    process.on('SIGTERM', exitWhenStopped)
+    process.on('SIGHUP', exitWhenStopped)
+    process.on('SIGUSR2', exitWhenStopped) // for nodemon restart
+    process.on('SIGBREAK', exitWhenStopped)
+    process.on('message', function (m) { // for PM2 under window with --shutdown-with-message
+        if (m === 'shutdown') { exitWhenStopped() }
+    })
+
+    // Start the server
+    server.listen({ port: server.config.port, host: server.config.host }, function (err, address) {
+        if (err) {
+            console.error(err)
+        }
+    })
+    return server
 }
 
 module.exports = {
