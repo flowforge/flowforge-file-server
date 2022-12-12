@@ -6,7 +6,7 @@ const util = require('@node-red/util').util
 //     project varchar(128) not NULL,
 //     scope   varchar(128) not NULL,
 //     values  json not NULL,
-//     CONSTRAINT onlyone UNIQUE(project, scope)
+//     CONSTRAINT "context-project-scope-unique" UNIQUE(project, scope)
 //   );
 
 const SELECT = 'SELECT "values" FROM "context" WHERE "project" = $1 AND "scope" = $2'
@@ -19,8 +19,10 @@ const DEL = 'DELETE from "context" where "project" = $1 and "scope" = $2'
 let pool
 
 module.exports = {
-    init: async function (opts) {
-        pool = new pg.Pool(opts)
+    init: async function (app) {
+        pool = new pg.Pool(app.config.context.options)
+
+        app.log.info(`FlowForge File Server Postgres Context connected to ${app.config.context.options.database} on ${app.config.context.options.host}`)
     },
     set: async function (projectId, scope, input) {
         const existing = await pool.query(SELECT, [projectId, scope])

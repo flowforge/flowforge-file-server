@@ -3,7 +3,9 @@ const util = require('@node-red/util').util
 const store = {}
 
 module.exports = {
-    init: function (options) {},
+    init: function (app) {
+        app.log.Info('FlowForge File Server using Memory Context')
+    },
     set: async function (projectId, scope, input) {
         input.forEach(element => {
             const key = projectId +

@@ -6,26 +6,26 @@ const { Client } = require('pg')
 let sequelize
 
 module.exports = {
-    init: async function (opts) {
+    init: async function (app) {
         const dbOptions = {
-            dialect: opts.type || 'sqlite',
-            logging: !!opts.logging
+            dialect: app.config.context.options.type || 'sqlite',
+            logging: !!app.config.context.options.logging
         }
 
         if (dbOptions.dialect === 'sqlite') {
-            let filename = opts.storage || 'context.db'
+            let filename = app.config.context.options.storage || 'context.db'
             if (filename !== ':memory:') {
                 if (!path.isAbsolute(filename)) {
-                    filename = path.join(__dirname, '../../var', filename)
+                    filename = path.join(app.config.home, 'var', filename)
                 }
                 dbOptions.storage = filename
             }
         } else if (dbOptions.dialect === 'postgres') {
-            dbOptions.host = opts.host || 'postgres'
-            dbOptions.port = opts.port || 5432
-            dbOptions.username = opts.username
-            dbOptions.password = opts.password
-            dbOptions.database = opts.database || 'ff-context'
+            dbOptions.host = app.config.context.options.host || 'postgres'
+            dbOptions.port = app.config.context.options.port || 5432
+            dbOptions.username = app.config.context.options.username
+            dbOptions.password = app.config.context.options.password
+            dbOptions.database = app.config.context.options.database || 'ff-context'
 
             const pgOptions = {
                 user: dbOptions.username,
@@ -35,7 +35,6 @@ module.exports = {
                 database: 'postgres'
             }
 
-            console.log(pgOptions)
             const client = new Client(pgOptions)
 
             try {
@@ -47,10 +46,13 @@ module.exports = {
                 }
             } catch (err) {
                 console.log('err:', err)
+                app.log.error(`FlowForge File Server Failed to create context the database ${dbOptions.database} on ${dbOptions.host}`)
             }
         }
 
         sequelize = new Sequelize(dbOptions)
+
+        app.log.info(`FlowForge File Server Sequelize Context connected to ${dbOptions.dialect} on ${dbOptions.host || dbOptions.storage}`)
 
         const Context = sequelize.define('Context', {
             project: { type: DataTypes.STRING, allowNull: false, unique: 'context-project-scope-unique' },

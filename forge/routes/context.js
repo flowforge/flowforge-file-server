@@ -12,7 +12,7 @@
 module.exports = async function (app, opts, done) {
     const driver = require(`../context-driver/${app.config.context.type}`)
 
-    await driver.init(app.config.context.options)
+    await driver.init(app)
 
     /**
      * Create/Update key
