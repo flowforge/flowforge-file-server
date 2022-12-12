@@ -124,10 +124,10 @@ module.exports = function (app) {
                 Key: resolvedPath
             }))
         },
-        async quota (teamId) {
+        async quota (teamId, projectId) {
             const objects = await s3.send(new ListObjectsCommand({
                 Bucket: bucketID,
-                Prefix: teamId
+                Prefix: join(teamId, projectId)
             }))
 
             let size = 0

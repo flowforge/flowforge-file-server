@@ -25,13 +25,38 @@ module.exports = async function (app, opts, done) {
 
     }, async (request, reply) => {
         const path = request.params['*']
+        let quota = -1
+        if (app.config.driver.quota) {
+            quota = await request.vfs.quota()
+        }
         try {
             if (request.headers.ff_mode === 'append') {
-                await request.vfs.append(path, request.body)
+                if (quota !== -1) {
+                    const newSize = quota + request.body.size
+                    if (newSize < app.config.driver.quota) {
+                        await request.vfs.append(path, request.body)
+                    } else {
+                        reply.code(413).send()
+                        return
+                    }
+                } else {
+                    await request.vfs.append(path, request.body)
+                }
             } else if (request.headers.ff_mode === 'ensureDir') {
                 await request.vfs.ensureDir(path, request.body)
             } else {
-                await request.vfs.save(path, request.body)
+                // should check if file exists first
+                if (quota !== -1) {
+                    const newSize = quota + request.body.size
+                    if (newSize < app.config.driver.quota) {
+                        await request.vfs.save(path, request.body)
+                    } else {
+                        reply.code(413).send()
+                        return
+                    }
+                } else {
+                    await request.vfs.save(path, request.body)
+                }
             }
             reply.code(200).send()
         } catch (err) {

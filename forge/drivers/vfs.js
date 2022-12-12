@@ -27,7 +27,7 @@ module.exports = function (app, theDriver, teamId, projectId) {
         },
 
         async quota () {
-            return await theDriver.quota(teamId)
+            return await theDriver.quota(teamId, projectId)
         }
     }
 }

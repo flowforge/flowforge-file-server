@@ -192,5 +192,9 @@ module.exports = {
                 }
             }
         }
+    },
+    quota: async function (projectId) {
+        const size = await client.json.strLen(projectId)
+        return size
     }
 }
