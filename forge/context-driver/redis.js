@@ -92,17 +92,20 @@ async function recursiveInsert (projectId, scope, path, value) {
 }
 
 module.exports = {
-    init: async function (options) {
+    init: async function (app) {
+        const url = app.config.context.options?.url || 'redis://localhost:6379'
         client = redis.createClient({
-            url: 'redis://localhost:6379'
+            url
         })
         await client.connect()
 
         client.on('error', err => {
             console.log('redis error:', err)
+            app.log.error(`FlowForge File Server Redis Error: ${err}`)
         })
 
         client.on('connect', () => {
+            app.log.info(`FlowForge File Server Redis Context connect to ${url}`)
         })
     },
     set: async function (projectId, scope, input) {
@@ -192,5 +195,9 @@ module.exports = {
                 }
             }
         }
+    },
+    quota: async function (projectId) {
+        const size = await client.json.strLen(projectId)
+        return size
     }
 }

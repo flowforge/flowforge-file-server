@@ -132,8 +132,8 @@ module.exports = function (app) {
             }
         },
 
-        async quota (teamId) {
-            return readDirSize(join(rootPath, teamId))
+        async quota (teamId, projectId) {
+            return readDirSize(join(rootPath, teamId, projectId))
         }
     }
 }

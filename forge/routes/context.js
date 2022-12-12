@@ -12,7 +12,7 @@
 module.exports = async function (app, opts, done) {
     const driver = require(`../context-driver/${app.config.context.type}`)
 
-    await driver.init(app.config.context.options)
+    await driver.init(app)
 
     /**
      * Create/Update key
@@ -46,8 +46,17 @@ module.exports = async function (app, opts, done) {
                 scope = `${scope}.flow`
             }
         }
-        await driver.set(projectId, scope, body)
-        reply.code(200).send({})
+        if (app.config.context.quota) {
+            if ((await driver.quota(projectId)) < app.config.context.quota) {
+                await driver.set(projectId, scope, body)
+                reply.code(200).send({})
+            } else {
+                reply.code(413).send({})
+            }
+        } else {
+            await driver.set(projectId, scope, body)
+            reply.code(200).send({})
+        }
     })
 
     /**

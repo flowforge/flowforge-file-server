@@ -60,10 +60,10 @@ module.exports = function (app) {
             delete storage[resolvePath(teamId, projectId, path)]
         },
 
-        async quota (teamId) {
+        async quota (teamId, projectId) {
             let used = 0
             Object.keys(storage).forEach(key => {
-                if (key.startsWith(teamId)) {
+                if (key.startsWith(join(teamId, projectId))) {
                     used += storage[key].length
                 }
             })
