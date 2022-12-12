@@ -1,6 +1,7 @@
 const { Sequelize, DataTypes } = require('sequelize')
 const util = require('@node-red/util').util
 const path = require('path')
+const { Client } = require('pg')
 
 let sequelize
 
@@ -25,6 +26,28 @@ module.exports = {
             dbOptions.username = opts.username
             dbOptions.password = opts.password
             dbOptions.database = opts.database || 'ff-context'
+
+            const pgOptions = {
+                user: dbOptions.username,
+                password: dbOptions.password,
+                host: dbOptions.host,
+                port: dbOptions.port,
+                database: 'postgres'
+            }
+
+            console.log(pgOptions)
+            const client = new Client(pgOptions)
+
+            try {
+                await client.connect()
+                const exists = await client.query(`SELECT 1 from pg_database WHERE datname = '${dbOptions.database}'`)
+                if (exists.rowCount === 0) {
+                    await client.query(`CREATE DATABASE "${dbOptions.database}"`)
+                    await client.end()
+                }
+            } catch (err) {
+                console.log('err:', err)
+            }
         }
 
         sequelize = new Sequelize(dbOptions)
@@ -154,5 +177,18 @@ module.exports = {
                 await r.destroy()
             }
         }
+    },
+    quota: async function (projectId) {
+        const scopesResults = await this.Context.findAll({
+            where: {
+                project: projectId
+            }
+        })
+        let size = 0
+        scopesResults.forEach(scope => {
+            const strValues = JSON.stringify(scope.values)
+            size += strValues.length
+        })
+        return size
     }
 }
