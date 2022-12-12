@@ -168,36 +168,36 @@ context:
     urls: redis://localhost:6379
 ```
 
-#### PostgreSQL
+#### Sequelize
 
-This driver uses a PostgreSQL database to hold the context values.
+This driver can use either PostgreSQL or SQLite to hold context values.
 
-If necessary, create the context DB
-```bash
-createdb -U flowforge -W -p 54321 ff-context
-```
-
-It expects the following table to be present in the database
-
-```sql
-CREATE TABLE "context" (
-    project varchar(128) not NULL,
-    scope   varchar(128) not NULL,
-    values  json not NULL,
-    CONSTRAINT "context-project-scope-unique" UNIQUE(project, scope)
-);
-```
+To use with PostgreSQL configure as follows:
 
 ```yaml
 context:
-  type: postgres
+  type: sequelize
   options:
-    port: 54321
-    host: localhost
+    type: postgres
+    host: 127.0.0.1
+    port: 5432
     database: ff-context
-    user: flowforge
-    password: secret
+    username: user
+    password: password
 ```
+
+To use with SQLite configure as follows:
+
+```yaml
+context:
+  type: squelize
+  options:
+    type: sqlite
+    storage: ff-context.db
+```
+
+Where `context.options.storage` is the filename of the SQLite database, by default it will be written to 
+the `var` directory if a fully qualified path is not provided.
 
 #### Memory
 

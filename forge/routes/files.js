@@ -28,11 +28,12 @@ module.exports = async function (app, opts, done) {
         let quota = -1
         if (app.config.driver.quota) {
             quota = await request.vfs.quota()
+            console.log('quota',quota)
         }
         try {
             if (request.headers.ff_mode === 'append') {
                 if (quota !== -1) {
-                    const newSize = quota + request.body.size
+                    const newSize = quota + request.body.length
                     if (newSize < app.config.driver.quota) {
                         await request.vfs.append(path, request.body)
                     } else {
