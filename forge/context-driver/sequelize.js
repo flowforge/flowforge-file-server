@@ -90,11 +90,13 @@ module.exports = {
                 transaction: t
             })
             if (!existing) {
-                console.log('new scope')
-                existing = new this.Context({
+                existing = await this.Context.create({
                     project: projectId,
                     scope,
                     values: {}
+                },
+                {
+                    transaction: t
                 })
             }
             for (const i in input) {
