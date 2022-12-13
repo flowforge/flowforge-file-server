@@ -16,12 +16,30 @@ describe('Context API', function () {
         appPort: 4011,
         authServerPort: 4012
     })
-    // contextApiTests({
-    //     driverType: 'postgres',
-    //     driverOptions: { /* TODO */ },
-    //     appPort: 4021,
-    //     authServerPort: 4022
-    // })
+    contextApiTests({
+        testName: 'Sequelize + sqlite',
+        driverType: 'sequelize',
+        driverOptions: {
+            type: 'sqlite',
+            storage: ':memory:'
+        },
+        appPort: 4021,
+        authServerPort: 4022
+    })
+    contextApiTests({
+        testName: 'Sequelize + postgres',
+        driverType: 'sequelize',
+        driverOptions: {
+            type: 'postgres',
+            host: 'localhost',
+            port: 5432,
+            username: 'postgres',
+            password: 'secret',
+            database: 'ff-context'
+        },
+        appPort: 4031,
+        authServerPort: 4032
+    })
     // contextApiTests({
     //     driverType: 'redis',
     //     driverOptions: { /* TODO */},
@@ -30,8 +48,8 @@ describe('Context API', function () {
     // })
 })
 
-function contextApiTests ({ driverType, driverOptions, appPort, authServerPort } = {}) {
-    describe(`${driverType} driver`, function () {
+function contextApiTests ({ testName, driverType, driverOptions, appPort, authServerPort } = {}) {
+    describe(testName || `${driverType} driver`, function () {
         let app, authServer
         before(async function () {
             app = await setup.setupApp({
@@ -40,6 +58,10 @@ function contextApiTests ({ driverType, driverOptions, appPort, authServerPort }
                 contextDriver: driverType,
                 contextDriverOptions: driverOptions
             })
+            if (app.log) {
+                app.log.level = 'fatal'
+                app.log.error = () => {}
+            }
             authServer = setup.authServer({
                 port: authServerPort,
                 authConfig: [
@@ -158,24 +180,30 @@ function contextApiTests ({ driverType, driverOptions, appPort, authServerPort }
         }
         // #endregion
 
-        it('Should load file-server application', async function () {
-            should(app).be.an.Object()
-        })
+        // it('Should load file-server application', async function () {
+        //     should(app).be.an.Object()
+        // })
 
         describe('Delete API', function () {
             beforeEach(async function () {
-                await SET('flow', [fv1])
-                await SET('flow', [fv2])
+                await SET('flow-1', [fv1])
+                await SET('flow-1', [fv2])
                 await SET('global', [gv1])
                 await SET('global', [gv2])
-                await SET('node-1', [nv1])
-                await SET('node-1', [nv2])
+                await SET('node-1:flow-1', [nv1])
+                await SET('node-1:flow-1', [nv2])
+                const flowKeys = await KEYS('flow-1')
+                const globalKeys = await KEYS('global')
+                const n1f1Keys = await KEYS('node-1:flow-1')
+                should(flowKeys.json()).deepEqual([fv1.key, fv2.key], 'flow keys should be set')
+                should(globalKeys.json()).deepEqual([gv1.key, gv2.key], 'global keys should be set')
+                should(n1f1Keys.json()).deepEqual([nv1.key, nv2.key], 'node keys should be set')
             })
-            it('Should delete flow context', async function () {
-                const response = await DELETE('flow')
+            it('Should delete flow-1 context', async function () {
+                const response = await DELETE('flow-1')
                 should(response.statusCode).eql(200)
-                const keys = await KEYS('flow')
-                should(keys.json()).deepEqual([], 'Keys should be empty after delete')
+                const keys = await KEYS('flow-1')
+                should(keys.json()).deepEqual([], 'flow keys should be empty after delete')
             })
             it('Should delete global context', async function () {
                 const response = await DELETE('global')
@@ -183,67 +211,68 @@ function contextApiTests ({ driverType, driverOptions, appPort, authServerPort }
                 const keys = await KEYS('global')
                 should(keys.json()).deepEqual([], 'Keys should be empty after delete')
             })
-            it('Should delete node-1 context', async function () {
-                const response = await DELETE('node-1')
+            it('Should delete node-1 on flow-1 context', async function () {
+                const response = await DELETE('node-1:flow-1')
                 should(response.statusCode).eql(200)
-                const keys = await KEYS('node-1')
+                const keys = await KEYS('node-1:flow-1')
                 should(keys.json()).deepEqual([], 'Keys should be empty after delete')
             })
         })
         describe('Clean API', function () {
             beforeEach(async function () {
-                await DELETE('flow')
+                await DELETE('flow-1')
                 await DELETE('global')
-                await DELETE('node-1')
-                await SET('flow', [fv1])
-                await SET('flow', [fv2])
+                await DELETE('node-1:flow-1')
+                await SET('flow-1', [fv1])
+                await SET('flow-1', [fv2])
                 await SET('global', [gv1])
                 await SET('global', [gv2])
-                await SET('node-1', [nv1])
-                await SET('node-1', [nv2])
-                await SET('node-2', [nv1])
-                await SET('node-2', [nv2])
-                await SET('node-3', [nv1])
-                await SET('node-3', [nv2])
+                await SET('node-1:flow-1', [nv1])
+                await SET('node-1:flow-1', [nv2])
+                await SET('node-2:flow-1', [nv1])
+                await SET('node-2:flow-1', [nv2])
+                await SET('node-3:flow-2', [nv1])
+                await SET('node-3:flow-2', [nv2])
             })
             it('Should clean all context', async function () {
                 await CLEAN([])
-                const flowKeys = await KEYS('flow')
-                should(flowKeys.json()).deepEqual([], 'Flow Keys should be empty after clean')
+                const flowKeys = await KEYS('flow-1')
                 const globalKeys = await KEYS('global')
+                const node1Keys = await KEYS('node-1:flow-1')
+                const node2Keys = await KEYS('node-2:flow-1')
+                const node3Keys = await KEYS('node-3:flow-2')
+                should(flowKeys.json()).deepEqual([], 'Flow Keys should be empty after clean')
                 should(globalKeys.json()).deepEqual([gv1.key, gv2.key], 'Global Keys should not be empty after clean')
-                const node1Keys = await KEYS('node-1')
-                should(node1Keys.json()).deepEqual([], 'Node-1 Keys should be empty after clean')
-                const node2Keys = await KEYS('node-2')
-                should(node2Keys.json()).deepEqual([], 'Node-2 Keys should be empty after clean')
-                const node3Keys = await KEYS('node-3')
-                should(node3Keys.json()).deepEqual([], 'Node-3 Keys should be empty after clean')
+                should(node1Keys.json()).deepEqual([], 'flow-1 node-1 keys should be empty after clean')
+                should(node2Keys.json()).deepEqual([], 'flow-1 node-2 Keys should be empty after clean')
+                should(node3Keys.json()).deepEqual([], 'flow-2 node-3 keys should be empty after clean')
             })
             it('Should clean all except node-1 context', async function () {
+                this.timeout(40000)
                 await CLEAN(['node-3'])
-                const flowKeys = await KEYS('flow')
-                should(flowKeys.json()).deepEqual([], 'Flow Keys should be empty after clean')
+                const flowKeys = await KEYS('flow-1')
                 const globalKeys = await KEYS('global')
+                const node1Keys = await KEYS('node-1:flow-1')
+                const node2Keys = await KEYS('node-2:flow-1')
+                const node3Keys = await KEYS('node-3:flow-2')
+                should(flowKeys.json()).deepEqual([], 'Flow Keys should be empty after clean')
                 should(globalKeys.json()).deepEqual([gv1.key, gv2.key], 'Global Keys should not be empty after clean')
-                const node1Keys = await KEYS('node-1')
-                should(node1Keys.json()).deepEqual([], 'Node-1 Keys should be empty after clean')
-                const node2Keys = await KEYS('node-2')
-                should(node2Keys.json()).deepEqual([], 'Node-2 Keys should be empty after clean')
-                const node3Keys = await KEYS('node-3')
-                should(node3Keys.json()).deepEqual([nv1.key, nv2.key], 'Node-3 Keys should not be empty')
+                should(node1Keys.json()).deepEqual([], 'flow-1 node-1 keys should be empty after clean')
+                should(node2Keys.json()).deepEqual([], 'flow-1 node-2 Keys should be empty after clean')
+                should(node3Keys.json()).deepEqual([nv1.key, nv2.key], 'flow-2 node-3 keys should not be empty')
             })
             it('Should clean all except node-1, node-2, node-3 context', async function () {
                 await CLEAN(['node-1', 'node-2', 'node-3'])
-                const flowKeys = await KEYS('flow')
-                should(flowKeys.json()).deepEqual([], 'Flow Keys should be empty after clean')
+                const flowKeys = await KEYS('flow-1')
                 const globalKeys = await KEYS('global')
+                const node1Keys = await KEYS('node-1:flow-1')
+                const node2Keys = await KEYS('node-2:flow-1')
+                const node3Keys = await KEYS('node-3:flow-2')
+                should(flowKeys.json()).deepEqual([], 'Flow Keys should be empty after clean')
                 should(globalKeys.json()).deepEqual([gv1.key, gv2.key], 'Global Keys should not be empty after clean')
-                const node1Keys = await KEYS('node-1')
-                should(node1Keys.json()).deepEqual([nv1.key, nv2.key], 'Node-1 Keys should not be empty')
-                const node2Keys = await KEYS('node-2')
-                should(node2Keys.json()).deepEqual([nv1.key, nv2.key], 'Node-2 Keys should not be empty')
-                const node3Keys = await KEYS('node-3')
-                should(node3Keys.json()).deepEqual([nv1.key, nv2.key], 'Node-3 Keys should not be empty')
+                should(node1Keys.json()).deepEqual([nv1.key, nv2.key], 'flow-1 node-1 keys should not be empty')
+                should(node2Keys.json()).deepEqual([nv1.key, nv2.key], 'flow-1 node-2 Keys should not be empty')
+                should(node3Keys.json()).deepEqual([nv1.key, nv2.key], 'flow-2 node-3 keys should not be empty')
             })
         })
         describe('Keys API', function () {
@@ -252,7 +281,7 @@ function contextApiTests ({ driverType, driverOptions, appPort, authServerPort }
                 await CLEAN([])
             })
             it('Should get empty array if no keys exist in flow', async function () {
-                const response = await KEYS('flow')
+                const response = await KEYS('flow-1')
                 should(response.statusCode).eql(200)
                 should(response.json()).deepEqual([])
             })
@@ -262,13 +291,13 @@ function contextApiTests ({ driverType, driverOptions, appPort, authServerPort }
                 should(response.json()).deepEqual([])
             })
             it('Should get empty array if no keys exist in node-1', async function () {
-                const response = await KEYS('node-1')
+                const response = await KEYS('node-1:flow-1')
                 should(response.statusCode).eql(200)
                 should(response.json()).deepEqual([])
             })
             it('Should get keys for flow context', async function () {
-                await SET('flow', [fv1, fv2])
-                const response = await KEYS('flow')
+                await SET('flow-1', [fv1, fv2])
+                const response = await KEYS('flow-1')
                 should(response.statusCode).eql(200)
                 should(response.json()).deepEqual(['flow-key-1', 'flow-key-2'])
             })
@@ -279,8 +308,8 @@ function contextApiTests ({ driverType, driverOptions, appPort, authServerPort }
                 should(response.json()).deepEqual(['global-key-1', 'global-key-2'])
             })
             it('Should get keys for node-1 context', async function () {
-                await SET('node-1', [nv1, nv2])
-                const response = await KEYS('node-1')
+                await SET('node-1:flow-1', [nv1, nv2])
+                const response = await KEYS('node-1:flow-1')
                 should(response.statusCode).eql(200)
                 should(response.json()).deepEqual(['node-1-key-1', 'node-1-key-2'])
             })
@@ -292,24 +321,24 @@ function contextApiTests ({ driverType, driverOptions, appPort, authServerPort }
             })
             describe('Set flow context value', function () {
                 it('Should set a single value', async function () {
-                    const response = await SET('flow', [{ key: 'test', value: 'test' }])
+                    const response = await SET('flow-1', [{ key: 'test', value: 'test' }])
                     should(response.statusCode).eql(200)
                 })
                 it('Should set multiple values in top level of context', async function () {
-                    const response = await SET('flow', [{ key: 'test', value: 'test' }, { key: 'test2', value: 'test2' }])
+                    const response = await SET('flow-1', [{ key: 'test', value: 'test' }, { key: 'test2', value: 'test2' }])
                     should(response.statusCode).eql(200)
                 })
                 it('Should set nested property and create object that did previously not exist', async function () {
-                    const response = await SET('flow', [{ key: 'nested.nested1.nested1', value: 'nested1 value' }])
+                    const response = await SET('flow-1', [{ key: 'nested.nested1.nested1', value: 'nested1 value' }])
                     should(response.statusCode).eql(200)
                 })
                 it('Should set nested property and on existing object', async function () {
-                    const response = await SET('flow', [{ key: 'nested.nested1.nested2', value: 'nested2 value' }])
+                    const response = await SET('flow-1', [{ key: 'nested.nested1.nested2', value: 'nested2 value' }])
                     should(response.statusCode).eql(200)
                 })
                 it('Should fail if key is invalid', async function () {
-                    const response = await SET('flow', [{ key: '.{}', value: 'test' }])
-                    should(response.statusCode).eql(500)
+                    const response = await SET('flow-1', [{ key: '.{}', value: 'test' }])
+                    should(response.statusCode).eql(400)
                     should(response.body.includes('INVALID_EXPR')).be.True('Expected error to contain "INVALID_EXPR"')
                 })
             })
@@ -332,45 +361,45 @@ function contextApiTests ({ driverType, driverOptions, appPort, authServerPort }
                 })
                 it('Should fail if key is invalid', async function () {
                     const response = await SET('global', [{ key: '.{}', value: 'test' }])
-                    should(response.statusCode).eql(500)
+                    should(response.statusCode).eql(400)
                     should(response.body.includes('INVALID_EXPR')).be.True('Expected error to contain "INVALID_EXPR"')
                 })
             })
             describe('Set node-1 context value', function () {
                 it('Should set a single value in top level of context', async function () {
-                    const response = await SET('node-1', [{ key: 'test', value: 'test' }])
+                    const response = await SET('node-1:flow-1', [{ key: 'test', value: 'test' }])
                     should(response.statusCode).eql(200)
                 })
                 it('Should set multiple values in top level of context', async function () {
-                    const response = await SET('node-1', [{ key: 'test', value: 'test' }, { key: 'test2', value: 'test2' }])
+                    const response = await SET('node-1:flow-1', [{ key: 'test', value: 'test' }, { key: 'test2', value: 'test2' }])
                     should(response.statusCode).eql(200)
                 })
                 it('Should set nested property and create object that did previously not exist', async function () {
-                    const response = await SET('node-1', [{ key: 'nested.nested1.nested1', value: 'nested1 value' }])
+                    const response = await SET('node-1:flow-1', [{ key: 'nested.nested1.nested1', value: 'nested1 value' }])
                     should(response.statusCode).eql(200)
                 })
                 it('Should set nested property and on existing object', async function () {
-                    const response = await SET('node-1', [{ key: 'nested.nested1.nested2', value: 'nested2 value' }])
+                    const response = await SET('node-1:flow-1', [{ key: 'nested.nested1.nested2', value: 'nested2 value' }])
                     should(response.statusCode).eql(200)
                 })
                 it('Should fail if key is invalid', async function () {
-                    const response = await SET('node-1', [{ key: '.{}', value: 'test' }])
-                    should(response.statusCode).eql(500)
+                    const response = await SET('node-1:flow-1', [{ key: '.{}', value: 'test' }])
+                    should(response.statusCode).eql(400)
                     should(response.body.includes('INVALID_EXPR')).be.True('Expected error to contain "INVALID_EXPR"')
                 })
             })
             describe('Set value to undefined to delete the item', function () {
                 it('Should remove a single value in top level of context', async function () {
                     // Set some context values & ensure they are set
-                    await SET('flow', [fv1, fv2])
-                    const _fv1 = await GET('flow', ['flow-key-1'])
-                    const _fv2 = await GET('flow', ['flow-key-2'])
+                    await SET('flow-1', [fv1, fv2])
+                    const _fv1 = await GET('flow-1', ['flow-key-1'])
+                    const _fv2 = await GET('flow-1', ['flow-key-2'])
                     should(_fv1.json()).deepEqual([fv1])
                     should(_fv2.json()).deepEqual([fv2])
                     // perform the delete by setting the value to undefined
-                    await SET('flow', [{ key: 'flow-key-1', value: undefined }])
-                    const _fv1AfterDelete = await GET('flow', ['flow-key-1'])
-                    const _fv2AfterDelete = await GET('flow', ['flow-key-2'])
+                    await SET('flow-1', [{ key: 'flow-key-1', value: undefined }])
+                    const _fv1AfterDelete = await GET('flow-1', ['flow-key-1'])
+                    const _fv2AfterDelete = await GET('flow-1', ['flow-key-2'])
                     // check that the value is deleted
                     should(_fv1AfterDelete.json()).eql([{ key: fv1.key }])
                     should(_fv2AfterDelete.json()).eql([fv2])
@@ -378,13 +407,13 @@ function contextApiTests ({ driverType, driverOptions, appPort, authServerPort }
                 it('Should remove a nested value', async function () {
                     // Set a nested context value & ensure it is set
                     const nnv = { key: 'nested1.nested2.nested3', value: 'nested3 value' }
-                    await SET('flow', [nnv]) // set a nested context value
+                    await SET('flow-1', [nnv]) // set a nested context value
                     // check that the values are set
-                    const _nnv = await GET('flow', ['nested1'])
+                    const _nnv = await GET('flow-1', ['nested1'])
                     should(_nnv.json()).deepEqual([{ key: 'nested1', value: { nested2: { nested3: 'nested3 value' } } }])
                     // perform the delete by setting the value to undefined
-                    await SET('flow', [{ key: 'nested1.nested2', value: undefined }])
-                    const _nnvAfterDelete = await GET('flow', ['nested1'])
+                    await SET('flow-1', [{ key: 'nested1.nested2', value: undefined }])
+                    const _nnvAfterDelete = await GET('flow-1', ['nested1'])
                     // check that the value is deleted
                     should(_nnvAfterDelete.json()).eql([{ key: 'nested1', value: { } }])
                 })
@@ -392,29 +421,29 @@ function contextApiTests ({ driverType, driverOptions, appPort, authServerPort }
         })
         describe('Get API', function () {
             before(async function () {
-                await DELETE('flow')
+                await DELETE('flow-1')
                 await DELETE('global')
-                await DELETE('node-1')
-                await SET('flow', [fv1])
-                await SET('flow', [fv2])
+                await DELETE('node-1:flow-1')
+                await SET('flow-1', [fv1])
+                await SET('flow-1', [fv2])
                 await SET('global', [gv1])
                 await SET('global', [gv2])
-                await SET('node-1', [nv1])
-                await SET('node-1', [nv2])
+                await SET('node-1:flow-1', [nv1])
+                await SET('node-1:flow-1', [nv2])
             })
             describe('Get flow context value', function () {
                 it('Should get a single value', async function () {
-                    const response = await GET('flow', ['flow-key-1'])
+                    const response = await GET('flow-1', ['flow-key-1'])
                     should(response.statusCode).eql(200)
                     should(response.json()).deepEqual([fv1])
                 })
                 it('Should get multiple values - all known', async function () {
-                    const response = await GET('flow', ['flow-key-1', 'flow-key-2'])
+                    const response = await GET('flow-1', ['flow-key-1', 'flow-key-2'])
                     should(response.statusCode).eql(200)
                     should(response.json()).deepEqual([fv1, fv2])
                 })
                 it('Should get multiple values - include unknown', async function () {
-                    const response = await GET('flow', ['flow-key-1', 'flow-key-2', 'flow-key-2.unknown', 'flow-key-x.unknown', 'flow-key-2.str'])
+                    const response = await GET('flow-1', ['flow-key-1', 'flow-key-2', 'flow-key-2.unknown', 'flow-key-x.unknown', 'flow-key-2.str'])
                     should(response.statusCode).eql(200)
                     const result = response.json()
                     should(result).be.an.Object()
@@ -424,12 +453,12 @@ function contextApiTests ({ driverType, driverOptions, appPort, authServerPort }
                     should(result.find(e => e.key === 'flow-key-2.str')).containDeep({ key: 'flow-key-2.str', value: fv2.value.str })
                 })
                 it('should return error for bad key', async function () {
-                    const response = await GET('flow', ['x.[].x'])
-                    should(response.statusCode).eql(500, 'Should have returned an error for bad key')
+                    const response = await GET('flow-1', ['x.[].x'])
+                    should(response.statusCode).eql(400, 'Should have returned an error for bad key')
                 })
                 it('should return error if bad key included in multiple keys', async function () {
-                    const response = await GET('flow', ['flow-key-1', '.1.x', 'flow-key-2.unknown', 'flow-key-1.str'])
-                    should(response.statusCode).eql(500, 'Should have returned an error for bad key')
+                    const response = await GET('flow-1', ['flow-key-1', '.1.x', 'flow-key-2.unknown', 'flow-key-1.str'])
+                    should(response.statusCode).eql(400, 'Should have returned an error for bad key')
                 })
             })
             describe('Get global context value', function () {
@@ -455,26 +484,26 @@ function contextApiTests ({ driverType, driverOptions, appPort, authServerPort }
                 })
                 it('should return error for bad key', async function () {
                     const response = await GET('global', ['x.[].x'])
-                    should(response.statusCode).eql(500, 'Should have returned an error for bad key')
+                    should(response.statusCode).eql(400, 'Should have returned an error for bad key')
                 })
                 it('should return error if bad key included in multiple keys', async function () {
                     const response = await GET('global', ['global-key-1', '.1.x', 'global-key-2.unknown', 'global-key-1.str'])
-                    should(response.statusCode).eql(500, 'Should have returned an error for bad key')
+                    should(response.statusCode).eql(400, 'Should have returned an error for bad key')
                 })
             })
             describe('Get node-1 context value', function () {
                 it('Should get a single value', async function () {
-                    const response = await GET('node-1', ['node-1-key-1'])
+                    const response = await GET('node-1:flow-1', ['node-1-key-1'])
                     should(response.statusCode).eql(200)
                     should(response.json()).deepEqual([nv1])
                 })
                 it('Should get multiple values - all known', async function () {
-                    const response = await GET('node-1', ['node-1-key-1', 'node-1-key-2'])
+                    const response = await GET('node-1:flow-1', ['node-1-key-1', 'node-1-key-2'])
                     should(response.statusCode).eql(200)
                     should(response.json()).deepEqual([nv1, nv2])
                 })
                 it('Should get multiple values - include unknown', async function () {
-                    const response = await GET('node-1', ['node-1-key-1', 'node-1-key-2', 'node-1-key-2.unknown', 'node-1-key-x.unknown', 'node-1-key-2.str'])
+                    const response = await GET('node-1:flow-1', ['node-1-key-1', 'node-1-key-2', 'node-1-key-2.unknown', 'node-1-key-x.unknown', 'node-1-key-2.str'])
                     should(response.statusCode).eql(200)
                     const result = response.json()
                     should(result).be.an.Object()
@@ -484,12 +513,12 @@ function contextApiTests ({ driverType, driverOptions, appPort, authServerPort }
                     should(result.find(e => e.key === 'node-1-key-2.str')).containDeep({ key: 'node-1-key-2.str', value: nv2.value.str })
                 })
                 it('should return error for bad key', async function () {
-                    const response = await GET('node-1', ['x.[].x'])
-                    should(response.statusCode).eql(500, 'Should have returned an error for bad key')
+                    const response = await GET('node-1:flow-1', ['x.[].x'])
+                    should(response.statusCode).eql(400, 'Should have returned an error for bad key')
                 })
                 it('should return error if bad key included in multiple keys', async function () {
-                    const response = await GET('node-1', ['node-1-key-1', '.1.x', 'node-1-key-2.unknown', 'node-1-key-1.str'])
-                    should(response.statusCode).eql(500, 'Should have returned an error for bad key')
+                    const response = await GET('node-1:flow-1', ['node-1-key-1', '.1.x', 'node-1-key-2.unknown', 'node-1-key-1.str'])
+                    should(response.statusCode).eql(400, 'Should have returned an error for bad key')
                 })
             })
         })
@@ -497,9 +526,9 @@ function contextApiTests ({ driverType, driverOptions, appPort, authServerPort }
         describe('Bleed tests', function () {
             it('Should not be able to access to other projects context', async function () {
                 // 1st set some values in test-project-1 to ensure that the token is cached
-                const set1 = await SET('flow', [fv1, fv2], 'test-project-1', 'test-token-1')
+                const set1 = await SET('flow-1', [fv1, fv2], 'test-project-1', 'test-token-1')
                 should(set1.statusCode).eql(200)
-                const set2 = await SET('flow', [fv1, fv2], 'test-project-2', 'test-token-1')
+                const set2 = await SET('flow-1', [fv1, fv2], 'test-project-2', 'test-token-1')
                 should(set2.statusCode).eql(401)
             })
         })

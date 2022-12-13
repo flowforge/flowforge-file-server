@@ -47,6 +47,9 @@ async function setupApp (config = {}) {
     config = config || {}
     const options = { }
     options.config = {
+        logging: {
+            level: 'silent'
+        },
         FLOWFORGE_HOME: config.home || process.cwd(),
         FLOWFORGE_PROJECT_ID: config.projectId || 'test-project',
         FLOWFORGE_TEAM_ID: config.teamId || 'test-team',
@@ -64,6 +67,29 @@ async function setupApp (config = {}) {
             options: config.contextDriverOptions
         }
     }
+    if (options.config.context.type === 'sequelize' && options.config.context.options.type === 'postgres') {
+        try {
+            const { Client } = require('pg')
+            const client = new Client({
+                host: options.config.context.options.host || 'localhost',
+                port: options.config.context.options.port || 5432,
+                user: options.config.context.options.username,
+                password: options.config.context.options.password
+            })
+            await client.connect()
+            try {
+                await client.query(`DROP DATABASE "${options.config.context.options.database}"`)
+            } catch (err) {
+                // Don't mind if it doesn't exist
+            }
+            await client.query(`CREATE DATABASE "${options.config.context.options.database}"`)
+            await client.end()
+        } catch (err) {
+            console.log(err.toString())
+            process.exit(1)
+        }
+    }
+
     const server = await flowForgeFileServer(options)
     let stopping = false
     async function exitWhenStopped () {
