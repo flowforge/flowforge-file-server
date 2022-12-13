@@ -40,28 +40,28 @@ module.exports = {
             dbOptions.password = app.config.context.options.password
             dbOptions.database = app.config.context.options.database || 'ff-context'
 
-            // This needs to go
-            const pgOptions = {
-                user: dbOptions.username,
-                password: dbOptions.password,
-                host: dbOptions.host,
-                port: dbOptions.port,
-                database: 'postgres'
-            }
+            // // This needs to go
+            // const pgOptions = {
+            //     user: dbOptions.username,
+            //     password: dbOptions.password,
+            //     host: dbOptions.host,
+            //     port: dbOptions.port,
+            //     database: 'postgres'
+            // }
 
-            const client = new Client(pgOptions)
+            // const client = new Client(pgOptions)
 
-            try {
-                await client.connect()
-                const exists = await client.query(`SELECT 1 from pg_database WHERE datname = '${dbOptions.database}'`)
-                if (exists.rowCount === 0) {
-                    await client.query(`CREATE DATABASE "${dbOptions.database}"`)
-                    await client.end()
-                }
-            } catch (err) {
-                console.log('err:', err)
-                app.log.error(`FlowForge File Server Failed to create context the database ${dbOptions.database} on ${dbOptions.host}`)
-            }
+            // try {
+            //     await client.connect()
+            //     const exists = await client.query(`SELECT 1 from pg_database WHERE datname = '${dbOptions.database}'`)
+            //     if (exists.rowCount === 0) {
+            //         await client.query(`CREATE DATABASE "${dbOptions.database}"`)
+            //         await client.end()
+            //     }
+            // } catch (err) {
+            //     console.log('err:', err)
+            //     app.log.error(`FlowForge File Server Failed to create context the database ${dbOptions.database} on ${dbOptions.host}`)
+            // }
         }
 
         sequelize = new Sequelize(dbOptions)
