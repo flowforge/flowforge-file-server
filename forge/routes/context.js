@@ -121,7 +121,15 @@ module.exports = async function (app, opts, done) {
     }, async (request, reply) => {
         // delete store[request.params.projectId][request.params.store]
         const projectId = request.params.projectId
-        const scope = request.params.scope
+        let scope = request.params.scope
+        if (scope !== 'global') {
+            if (scope.indexOf(':') !== -1) {
+                const parts = scope.split(':')
+                scope = `${parts[1]}.nodes.${parts[0]}`
+            } else {
+                scope = `${scope}.flow`
+            }
+        }
         await driver.delete(projectId, scope)
         reply.send()
     })

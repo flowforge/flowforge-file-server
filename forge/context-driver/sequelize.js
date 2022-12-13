@@ -63,29 +63,37 @@ module.exports = {
         this.Context = Context
     },
     set: async function (projectId, scope, input) {
-        let existing = await this.Context.findOne({
-            where: {
-                project: projectId,
-                scope
-            }
-        })
-        if (!existing) {
-            console.log('new scope')
-            existing = new this.Context({
-                project: projectId,
-                scope,
-                values: {}
+        await sequelize.transaction({
+            type: Sequelize.Transaction.TYPES.IMMEDIATE
+        },
+        async (t) => {
+            let existing = await this.Context.findOne({
+                where: {
+                    project: projectId,
+                    scope
+                },
+                lock: t.LOCK.UPDATE,
+                transaction: t
             })
-        }
-        for (const i in input) {
-            const path = input[i].key
-            const value = input[i].value
-            util.setMessageProperty(existing.values, path, value)
-        }
-        existing.changed('values', true)
-        await existing.save()
+            if (!existing) {
+                console.log('new scope')
+                existing = new this.Context({
+                    project: projectId,
+                    scope,
+                    values: {}
+                })
+            }
+            for (const i in input) {
+                const path = input[i].key
+                const value = input[i].value
+                util.setMessageProperty(existing.values, path, value)
+            }
+            existing.changed('values', true)
+            await existing.save({ transaction: t })
+        })
     },
     get: async function (projectId, scope, keys) {
+        console.log(scope)
         const row = await this.Context.findOne({
             attributes: ['values'],
             where: {
