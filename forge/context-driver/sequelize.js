@@ -1,7 +1,7 @@
 const { Sequelize, DataTypes } = require('sequelize')
 const util = require('@node-red/util').util
 const path = require('path')
-const { Client } = require('pg')
+// const { Client } = require('pg')
 
 let sequelize
 
