@@ -19,6 +19,19 @@ module.exports = {
                     filename = path.join(app.config.home, 'var', filename)
                 }
                 dbOptions.storage = filename
+                dbOptions.retry = {
+                    match: [
+                        /SQLITE_BUSY/
+                    ],
+                    name: 'query',
+                    max: 10
+                }
+                dbOptions.pool = {
+                    maxactive: 1,
+                    max: 5,
+                    min: 0,
+                    idle: 2000
+                }
             }
         } else if (dbOptions.dialect === 'postgres') {
             dbOptions.host = app.config.context.options.host || 'postgres'
@@ -27,6 +40,7 @@ module.exports = {
             dbOptions.password = app.config.context.options.password
             dbOptions.database = app.config.context.options.database || 'ff-context'
 
+            // This needs to go
             const pgOptions = {
                 user: dbOptions.username,
                 password: dbOptions.password,
