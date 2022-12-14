@@ -28,18 +28,20 @@ module.exports = {
                 const currentItem = projectStore ? getObjectProperty(projectStore, path) : undefined
                 if (currentItem === undefined && element.value !== undefined) {
                     // this is an addition
-                    changeSize += getItemSize(element)
+                    changeSize += getItemSize(element.value)
                 } else if (currentItem !== undefined && element.value === undefined) {
                     // this is an deletion
                     changeSize -= getItemSize(currentItem)
                 } else {
                     // this is an update
                     changeSize -= getItemSize(currentItem)
-                    changeSize += getItemSize(element)
+                    changeSize += getItemSize(element.value)
                 }
             })
             const currentSize = await this.quota(projectId)
-            if (currentSize + changeSize > quotaLimit) {
+            if (changeSize < 0) {
+                // if the change is negative then allow it to go through
+            } else if (currentSize + changeSize > quotaLimit) {
                 const err = new Error('Over Quota')
                 err.code = 'over_quota'
                 err.error = err.message
