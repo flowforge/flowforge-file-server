@@ -36,7 +36,7 @@ module.exports = async function (app, opts, done) {
                     if (newSize < app.config.driver.quota) {
                         await request.vfs.append(path, request.body)
                     } else {
-                        reply.code(413).send()
+                        reply.code(413).send({ code: 'over_quota', error: 'Over Quota', limit: app.config.driver.quota })
                         return
                     }
                 } else {
@@ -51,7 +51,7 @@ module.exports = async function (app, opts, done) {
                     if (newSize < app.config.driver.quota) {
                         await request.vfs.save(path, request.body)
                     } else {
-                        reply.code(413).send()
+                        reply.code(413).send({ code: 'over_quota', error: 'Over Quota', limit: app.config.driver.quota })
                         return
                     }
                 } else {

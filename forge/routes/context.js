@@ -42,7 +42,7 @@ module.exports = async function (app, opts, done) {
                 await driver.set(projectId, request.params.scope, body)
                 reply.code(200).send({})
             } else {
-                reply.code(413).send({})
+                reply.code(413).send({ code: 'over_quota', error: 'Over Quota', limit: app.config.context.quota })
             }
         } else {
             try {
