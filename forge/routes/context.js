@@ -37,20 +37,15 @@ module.exports = async function (app, opts, done) {
     }, async (request, reply) => {
         const body = request.body
         const projectId = request.params.projectId
-        if (app.config.context.quota) {
-            if ((await driver.quota(projectId)) < app.config.context.quota) {
-                await driver.set(projectId, request.params.scope, body)
-                reply.code(200).send({})
-            } else {
-                reply.code(413).send({ code: 'over_quota', error: 'Over Quota', limit: app.config.context.quota })
+        try {
+            await driver.set(projectId, request.params.scope, body)
+            reply.code(200).send({})
+        } catch (error) {
+            let statusCode = error.statusCode || 400
+            if (error.code === 'over_quota') {
+                statusCode = 413
             }
-        } else {
-            try {
-                await driver.set(projectId, request.params.scope, body)
-                reply.code(200).send({})
-            } catch (error) {
-                reply.code(400).send(error)
-            }
+            reply.code(statusCode).send({ error: error.message, code: error.code, limit: error.limit })
         }
     })
 
