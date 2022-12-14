@@ -38,15 +38,16 @@ module.exports = {
                     changeSize += getItemSize(element.value)
                 }
             })
-            const currentSize = await this.quota(projectId)
-            if (changeSize < 0) {
-                // if the change is negative then allow it to go through
-            } else if (currentSize + changeSize > quotaLimit) {
-                const err = new Error('Over Quota')
-                err.code = 'over_quota'
-                err.error = err.message
-                err.limit = quotaLimit
-                throw err
+            // only calculate the current size if we are going to need it
+            if (changeSize >= 0) {
+                const currentSize = await this.quota(projectId)
+                if (currentSize + changeSize > quotaLimit) {
+                    const err = new Error('Over Quota')
+                    err.code = 'over_quota'
+                    err.error = err.message
+                    err.limit = quotaLimit
+                    throw err
+                }
             }
         }
         input.forEach(element => {
