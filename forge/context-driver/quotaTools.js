@@ -41,7 +41,7 @@ function getItemSize (blob) {
     }
     if (typeof blob === 'string') {
         size = blob.length
-    } else if (typeof blob === 'object') {
+    } else {
         size = size + JSON.stringify(blob).length
     }
     return size
