@@ -26,20 +26,22 @@ describe('Context API', function () {
         appPort: 4021,
         authServerPort: 4022
     })
-    contextApiTests({
-        testName: 'Sequelize + postgres',
-        driverType: 'sequelize',
-        driverOptions: {
-            type: 'postgres',
-            host: 'localhost',
-            port: 5432,
-            username: 'postgres',
-            password: 'secret',
-            database: 'ff-context'
-        },
-        appPort: 4031,
-        authServerPort: 4032
-    })
+    if (process.env.TEST_POSTGRES !== 'false') {
+        contextApiTests({
+            testName: 'Sequelize + postgres',
+            driverType: 'sequelize',
+            driverOptions: {
+                type: 'postgres',
+                host: 'localhost',
+                port: 5432,
+                username: 'postgres',
+                password: 'secret',
+                database: 'ff-context'
+            },
+            appPort: 4031,
+            authServerPort: 4032
+        })
+    }
     // contextApiTests({
     //     driverType: 'redis',
     //     driverOptions: { /* TODO */},
