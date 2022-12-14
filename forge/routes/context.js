@@ -37,25 +37,20 @@ module.exports = async function (app, opts, done) {
     }, async (request, reply) => {
         const body = request.body
         const projectId = request.params.projectId
-        let scope = request.params.scope
-        if (scope !== 'global') {
-            if (scope.indexOf(':') !== -1) {
-                const parts = scope.split(':')
-                scope = `${parts[1]}.nodes.${parts[0]}`
-            } else {
-                scope = `${scope}.flow`
-            }
-        }
         if (app.config.context.quota) {
             if ((await driver.quota(projectId)) < app.config.context.quota) {
-                await driver.set(projectId, scope, body)
+                await driver.set(projectId, request.params.scope, body)
                 reply.code(200).send({})
             } else {
                 reply.code(413).send({})
             }
         } else {
-            await driver.set(projectId, scope, body)
-            reply.code(200).send({})
+            try {
+                await driver.set(projectId, request.params.scope, body)
+                reply.code(200).send({})
+            } catch (error) {
+                reply.code(400).send(error)
+            }
         }
     })
 
@@ -82,16 +77,11 @@ module.exports = async function (app, opts, done) {
     }, async (request, reply) => {
         const keys = request.query.key
         const projectId = request.params.projectId
-        let scope = request.params.scope
-        if (scope !== 'global') {
-            if (scope.indexOf(':') !== -1) {
-                const parts = scope.split(':')
-                scope = `${parts[1]}.nodes.${parts[0]}`
-            } else {
-                scope = `${scope}.flow`
-            }
+        try {
+            reply.send(await driver.get(projectId, request.params.scope, keys))
+        } catch (error) {
+            reply.code(400).send(error)
         }
-        reply.send(await driver.get(projectId, scope, keys))
     })
 
     /**
@@ -105,8 +95,11 @@ module.exports = async function (app, opts, done) {
 
     }, async (request, reply) => {
         const projectId = request.params.projectId
-        const scope = request.params.scope
-        reply.send(await driver.keys(projectId, scope))
+        try {
+            reply.send(await driver.keys(projectId, request.params.scope))
+        } catch (error) {
+            reply.code(400).send(error)
+        }
     })
 
     /**
@@ -121,8 +114,7 @@ module.exports = async function (app, opts, done) {
     }, async (request, reply) => {
         // delete store[request.params.projectId][request.params.store]
         const projectId = request.params.projectId
-        const scope = request.params.scope
-        await driver.delete(projectId, scope)
+        await driver.delete(projectId, request.params.scope)
         reply.send()
     })
 

@@ -207,3 +207,32 @@ This driver is purely to make testing easier, it has no configuration options.
 
 - FLOWFORGE_HOME default `/opt/flowforge-file-storage`
 - PORT overrides value in config file, default 3001
+
+## Development
+
+### Testing
+
+```bash
+npm run test
+```
+
+NOTE: This will run all tests for all backends and requires a running postgres database
+
+To prepare postgres for the tests, use the following procedure (tested on Linux and WSL2 ubuntu + docker)...
+
+```bash
+docker run --rm --name postgres -e POSTGRES_PASSWORD=secret -e POSTGRES_USER=postgres -p 5432:5432 postgres:14
+```
+
+
+### Testing (without postgres)
+
+```
+npm run test:nopg
+```
+
+Alternatively, you can set env variable TEST_POSTGRES=false
+```
+export TEST_POSTGRES=false
+npm run test
+```

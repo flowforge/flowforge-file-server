@@ -1,7 +1,6 @@
 const { Sequelize, DataTypes } = require('sequelize')
 const util = require('@node-red/util').util
 const path = require('path')
-const { Client } = require('pg')
 
 let sequelize
 
@@ -19,6 +18,19 @@ module.exports = {
                     filename = path.join(app.config.home, 'var', filename)
                 }
                 dbOptions.storage = filename
+                dbOptions.retry = {
+                    match: [
+                        /SQLITE_BUSY/
+                    ],
+                    name: 'query',
+                    max: 10
+                }
+                dbOptions.pool = {
+                    maxactive: 1,
+                    max: 5,
+                    min: 0,
+                    idle: 2000
+                }
             }
         } else if (dbOptions.dialect === 'postgres') {
             dbOptions.host = app.config.context.options.host || 'postgres'
@@ -26,28 +38,6 @@ module.exports = {
             dbOptions.username = app.config.context.options.username
             dbOptions.password = app.config.context.options.password
             dbOptions.database = app.config.context.options.database || 'ff-context'
-
-            const pgOptions = {
-                user: dbOptions.username,
-                password: dbOptions.password,
-                host: dbOptions.host,
-                port: dbOptions.port,
-                database: 'postgres'
-            }
-
-            const client = new Client(pgOptions)
-
-            try {
-                await client.connect()
-                const exists = await client.query(`SELECT 1 from pg_database WHERE datname = '${dbOptions.database}'`)
-                if (exists.rowCount === 0) {
-                    await client.query(`CREATE DATABASE "${dbOptions.database}"`)
-                    await client.end()
-                }
-            } catch (err) {
-                console.log('err:', err)
-                app.log.error(`FlowForge File Server Failed to create context the database ${dbOptions.database} on ${dbOptions.host}`)
-            }
         }
 
         sequelize = new Sequelize(dbOptions)
@@ -59,67 +49,80 @@ module.exports = {
             scope: { type: DataTypes.STRING, allowNull: false, unique: 'context-project-scope-unique' },
             values: { type: DataTypes.JSON, allowNull: false }
         })
-        sequelize.sync()
+        await sequelize.sync()
         this.Context = Context
     },
     set: async function (projectId, scope, input) {
-        let existing = await this.Context.findOne({
-            where: {
-                project: projectId,
-                scope
-            }
-        })
-        if (!existing) {
-            console.log('new scope')
-            existing = new this.Context({
-                project: projectId,
-                scope,
-                values: {}
+        const { path } = parseScope(scope)
+        await sequelize.transaction({
+            type: Sequelize.Transaction.TYPES.IMMEDIATE
+        },
+        async (t) => {
+            let existing = await this.Context.findOne({
+                where: {
+                    project: projectId,
+                    scope: path
+                },
+                lock: t.LOCK.UPDATE,
+                transaction: t
             })
-        }
-        for (const i in input) {
-            const path = input[i].key
-            const value = input[i].value
-            util.setMessageProperty(existing.values, path, value)
-        }
-        existing.changed('values', true)
-        await existing.save()
+            if (!existing) {
+                existing = await this.Context.create({
+                    project: projectId,
+                    scope: path,
+                    values: {}
+                },
+                {
+                    transaction: t
+                })
+            }
+            for (const i in input) {
+                const path = input[i].key
+                const value = input[i].value
+                util.setMessageProperty(existing.values, path, value)
+            }
+            existing.changed('values', true)
+            await existing.save({ transaction: t })
+        })
     },
     get: async function (projectId, scope, keys) {
+        const { path } = parseScope(scope)
         const row = await this.Context.findOne({
             attributes: ['values'],
             where: {
                 project: projectId,
-                scope
+                scope: path
             }
         })
         const values = []
         if (row) {
             const data = row.values
             keys.forEach(key => {
-                const value = util.getObjectProperty(data, key)
-                values.push({
-                    key,
-                    value
-                })
+                try {
+                    const value = util.getObjectProperty(data, key)
+                    values.push({
+                        key,
+                        value
+                    })
+                } catch (err) {
+                    if (err.code === 'INVALID_EXPR') {
+                        throw err
+                    }
+                    values.push({
+                        key
+                    })
+                }
             })
         }
         return values
     },
     keys: async function (projectId, scope) {
-        if (scope !== 'global') {
-            if (scope.indexOf(':') !== -1) {
-                const parts = scope.split(':')
-                scope = `${parts[1]}.nodes.${parts[0]}`
-            } else {
-                scope = `${scope}.flow`
-            }
-        }
+        const { path } = parseScope(scope)
         const row = await this.Context.findOne({
             attributes: ['values'],
             where: {
                 project: projectId,
-                scope
+                scope: path
             }
         })
         if (row) {
@@ -129,17 +132,19 @@ module.exports = {
         }
     },
     delete: async function (projectId, scope) {
+        const { path } = parseScope(scope)
         const existing = await this.Context.findOne({
             where: {
                 project: projectId,
-                scope
+                scope: path
             }
         })
         if (existing) {
             await existing.destroy()
         }
     },
-    clean: async function (projectId, ids) {
+    clean: async function (projectId, activeIds) {
+        activeIds = activeIds || []
         const scopesResults = await this.Context.findAll({
             where: {
                 project: projectId
@@ -154,19 +159,17 @@ module.exports = {
         }
         const keepFlows = []
         const keepNodes = []
-        for (const i in ids) {
-            const id = ids[i]
-            for (const s in scopes) {
-                const scope = scopes[s]
+        for (const id of activeIds) {
+            for (const scope of scopes) {
                 if (scope.startsWith(`${id}.flow`)) {
                     keepFlows.push(scope)
-                } else if (scope.endsWith(`nodes.${id}`)) {
+                } else if (scope.endsWith(`.nodes.${id}`)) {
                     keepNodes.push(scope)
                 }
             }
         }
-        for (const s in scopes) {
-            const scope = scopes[s]
+
+        for (const scope of scopes) {
             if (keepFlows.includes(scope) || keepNodes.includes(scope)) {
                 continue
             } else {
@@ -193,4 +196,29 @@ module.exports = {
         })
         return size
     }
+}
+
+/**
+ * Parse a scope string into its parts
+ * @param {String} scope the scope to parse, passed in from node-red
+ */
+function parseScope (scope) {
+    let type, path
+    let flow = null
+    if (scope === 'global') {
+        type = 'global'
+        path = 'global'
+    } else if (scope.indexOf(':') > -1) {
+        // node context
+        const parts = scope.split(':')
+        type = 'node'
+        scope = '' + parts[0]
+        flow = '' + parts[1]
+        path = `${flow}.nodes.${scope}`
+    } else {
+        // flow context
+        type = 'flow'
+        path = `${scope}.flow`
+    }
+    return { type, scope, path, flow }
 }
