@@ -1,15 +1,58 @@
+const { getObjectProperty, getItemSize } = require('./quotaTools')
 const util = require('@node-red/util').util
 
 const store = {}
-
+let app
 module.exports = {
-    init: function (app) {
+    init: function (_app) {
+        app = _app
         app.log.info('FlowForge File Server using Memory Context')
     },
     set: async function (projectId, scope, input) {
+        if (!store[projectId]) {
+            store[projectId] = {}
+        }
+        const projectStore = store[projectId]
+        const quotaLimit = app.config?.context?.quota || 0
+        // if quota is set, check if we are over quota or will be after this update
+        if (quotaLimit > 0) {
+            // Difficulties implementing this correctly
+            // - The final size of data can only be determined after the data is stored.
+            //   This is due to the fact that some keys may be deleted and some may be added
+            //   and the size of the data is not the same as the size of the keys.
+            // This implementation is not ideal, but it is a good approximation and will
+            //   prevent the possibility of runaway storage usage.
+            let changeSize = 0
+            input.forEach(element => {
+                const path = scope + '.' + element.key
+                const currentItem = projectStore ? getObjectProperty(projectStore, path) : undefined
+                if (currentItem === undefined && element.value !== undefined) {
+                    // this is an addition
+                    changeSize += getItemSize(element.value)
+                } else if (currentItem !== undefined && element.value === undefined) {
+                    // this is an deletion
+                    changeSize -= getItemSize(currentItem)
+                } else {
+                    // this is an update
+                    changeSize -= getItemSize(currentItem)
+                    changeSize += getItemSize(element.value)
+                }
+            })
+            // only calculate the current size if we are going to need it
+            if (changeSize >= 0) {
+                const currentSize = await this.quota(projectId)
+                if (currentSize + changeSize > quotaLimit) {
+                    const err = new Error('Over Quota')
+                    err.code = 'over_quota'
+                    err.error = err.message
+                    err.limit = quotaLimit
+                    throw err
+                }
+            }
+        }
         input.forEach(element => {
-            const fullPath = projectId + '.' + scope + '.' + element.key
-            util.setObjectProperty(store, fullPath, element.value)
+            const path = scope + '.' + element.key
+            util.setObjectProperty(projectStore, path, element.value)
         })
     },
     get: async function (projectId, scope, keys) {
@@ -65,5 +108,9 @@ module.exports = {
                 }
             }
         }
+    },
+    quota: async function (projectId) {
+        const projectStore = store[projectId]
+        return getItemSize(projectStore)
     }
 }

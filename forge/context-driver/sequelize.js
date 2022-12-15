@@ -1,11 +1,13 @@
 const { Sequelize, DataTypes } = require('sequelize')
+const { getObjectProperty, getItemSize } = require('./quotaTools')
 const util = require('@node-red/util').util
 const path = require('path')
 
-let sequelize
+let sequelize, app
 
 module.exports = {
-    init: async function (app) {
+    init: async function (_app) {
+        app = _app
         const dbOptions = {
             dialect: app.config.context.options.type || 'sqlite',
             logging: !!app.config.context.options.logging
@@ -58,6 +60,50 @@ module.exports = {
             type: Sequelize.Transaction.TYPES.IMMEDIATE
         },
         async (t) => {
+            const quotaLimit = app.config?.context?.quota || 0
+            // if quota is set, check if we are over quota or will be after this update
+            if (quotaLimit > 0) {
+                // Difficulties implementing this correctly
+                // - The final size of data can only be determined after the data is stored.
+                //   This is due to the fact that some keys may be deleted and some may be added
+                //   and the size of the data is not the same as the size of the keys.
+                // This implementation is not ideal, but it is a good approximation and will
+                //   prevent the possibility of runaway storage usage.
+                let changeSize = 0
+                const { path } = parseScope(scope)
+                const row = await this.Context.findOne({
+                    attributes: ['values'],
+                    where: {
+                        project: projectId,
+                        scope: path
+                    }
+                })
+                for (const element of input) {
+                    const currentItem = row ? getObjectProperty(row.values, element.key) : undefined
+                    if (currentItem === undefined && element.value !== undefined) {
+                        // this is an addition
+                        changeSize += getItemSize(element.value)
+                    } else if (currentItem !== undefined && element.value === undefined) {
+                        // this is an deletion
+                        changeSize -= getItemSize(currentItem)
+                    } else {
+                        // this is an update
+                        changeSize -= getItemSize(currentItem)
+                        changeSize += getItemSize(element.value)
+                    }
+                }
+                // only calculate the current size if we are going to need it
+                if (changeSize >= 0) {
+                    const currentSize = await this.quota(projectId)
+                    if (currentSize + changeSize > quotaLimit) {
+                        const err = new Error('Over Quota')
+                        err.code = 'over_quota'
+                        err.error = err.message
+                        err.limit = quotaLimit
+                        throw err
+                    }
+                }
+            }
             let existing = await this.Context.findOne({
                 where: {
                     project: projectId,

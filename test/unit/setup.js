@@ -64,6 +64,7 @@ async function setupApp (config = {}) {
         },
         context: {
             type: config.contextDriver || 'memory',
+            quota: config.contextQuota || 100000, // default context quota is 100KB
             options: config.contextDriverOptions
         }
     }

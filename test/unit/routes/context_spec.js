@@ -14,7 +14,8 @@ describe('Context API', function () {
         driverType: 'memory',
         driverOptions: {},
         appPort: 4011,
-        authServerPort: 4012
+        authServerPort: 4012,
+        contextQuota: 1000 // set quota to 1K and test we don't exceed it
     })
     contextApiTests({
         testName: 'Sequelize + sqlite',
@@ -24,7 +25,8 @@ describe('Context API', function () {
             storage: ':memory:'
         },
         appPort: 4021,
-        authServerPort: 4022
+        authServerPort: 4022,
+        contextQuota: 1000 // set quota to 1K and test we don't exceed it
     })
     if (process.env.TEST_POSTGRES !== 'false') {
         contextApiTests({
@@ -39,7 +41,8 @@ describe('Context API', function () {
                 database: 'ff-context'
             },
             appPort: 4031,
-            authServerPort: 4032
+            authServerPort: 4032,
+            contextQuota: 1000 // set quota to 1K and test we don't exceed it
         })
     }
     // contextApiTests({
@@ -50,7 +53,7 @@ describe('Context API', function () {
     // })
 })
 
-function contextApiTests ({ testName, driverType, driverOptions, appPort, authServerPort } = {}) {
+function contextApiTests ({ testName, driverType, driverOptions, appPort, authServerPort, contextQuota } = {}) {
     describe(testName || `${driverType} driver`, function () {
         let app, authServer
         before(async function () {
@@ -58,7 +61,8 @@ function contextApiTests ({ testName, driverType, driverOptions, appPort, authSe
                 port: appPort,
                 base_url: `http://localhost:${authServerPort}`,
                 contextDriver: driverType,
-                contextDriverOptions: driverOptions
+                contextDriverOptions: driverOptions,
+                contextQuota: contextQuota || 1000
             })
             if (app.log) {
                 app.log.level = 'fatal'
@@ -317,9 +321,9 @@ function contextApiTests ({ testName, driverType, driverOptions, appPort, authSe
             })
         })
         describe('Set API', function () {
-            before(async function () {
+            beforeEach(async function () {
                 await DELETE('global')
-                await CLEAN()
+                await CLEAN([])
             })
             describe('Set flow context value', function () {
                 it('Should set a single value', async function () {
@@ -342,6 +346,21 @@ function contextApiTests ({ testName, driverType, driverOptions, appPort, authSe
                     const response = await SET('flow-1', [{ key: '.{}', value: 'test' }])
                     should(response.statusCode).eql(400)
                     should(response.body.includes('INVALID_EXPR')).be.True('Expected error to contain "INVALID_EXPR"')
+                })
+                it('Should fail if quota is exceeded', async function () {
+                    await DELETE('global')
+                    await CLEAN([])
+                    const str250bytes = new Array(255).join('a')
+                    await SET('flow-1', [{ key: 'big-data-1', value: str250bytes }]) // 255 bytes
+                    await SET('flow-1', [{ key: 'big-data-2', value: str250bytes }]) // 510 bytes
+                    const r3 = await SET('flow-1', [{ key: 'big-data-3', value: str250bytes }]) // 760 bytes
+                    should(r3.statusCode).eql(200)
+                    const response = await SET('flow-1', [{ key: 'big-data-4', value: str250bytes }]) // over 1000 bytes
+                    should(response.statusCode).eql(413)
+                    const body = response.json()
+                    body.should.have.property('error')
+                    body.should.have.property('code', 'over_quota')
+                    body.should.have.property('limit', 1000)
                 })
             })
             describe('Set global context value', function () {
@@ -366,6 +385,21 @@ function contextApiTests ({ testName, driverType, driverOptions, appPort, authSe
                     should(response.statusCode).eql(400)
                     should(response.body.includes('INVALID_EXPR')).be.True('Expected error to contain "INVALID_EXPR"')
                 })
+                it('Should fail if quota is exceeded', async function () {
+                    await DELETE('global')
+                    await CLEAN([])
+                    const str250bytes = new Array(255).join('a')
+                    await SET('global', [{ key: 'big-data-1', value: str250bytes }]) // 255 bytes
+                    await SET('global', [{ key: 'big-data-2', value: str250bytes }]) // 510 bytes
+                    const r3 = await SET('global', [{ key: 'big-data-3', value: str250bytes }]) // 760 bytes
+                    should(r3.statusCode).eql(200)
+                    const response = await SET('global', [{ key: 'big-data-4', value: str250bytes }]) // over 1000 bytes
+                    should(response.statusCode).eql(413)
+                    const body = response.json()
+                    body.should.have.property('error')
+                    body.should.have.property('code', 'over_quota')
+                    body.should.have.property('limit', 1000)
+                })
             })
             describe('Set node-1 context value', function () {
                 it('Should set a single value in top level of context', async function () {
@@ -388,6 +422,21 @@ function contextApiTests ({ testName, driverType, driverOptions, appPort, authSe
                     const response = await SET('node-1:flow-1', [{ key: '.{}', value: 'test' }])
                     should(response.statusCode).eql(400)
                     should(response.body.includes('INVALID_EXPR')).be.True('Expected error to contain "INVALID_EXPR"')
+                })
+                it('Should fail if quota is exceeded', async function () {
+                    await DELETE('global')
+                    await CLEAN([])
+                    const str250bytes = new Array(255).join('a')
+                    await SET('node-1:flow-1', [{ key: 'big-data-1', value: str250bytes }]) // 255 bytes
+                    await SET('node-1:flow-1', [{ key: 'big-data-2', value: str250bytes }]) // 510 bytes
+                    const r3 = await SET('node-1:flow-1', [{ key: 'big-data-3', value: str250bytes }]) // 760 bytes
+                    should(r3.statusCode).eql(200)
+                    const response = await SET('node-1:flow-1', [{ key: 'big-data-4', value: str250bytes }]) // over 1000 bytes
+                    should(response.statusCode).eql(413)
+                    const body = response.json()
+                    body.should.have.property('error')
+                    body.should.have.property('code', 'over_quota')
+                    body.should.have.property('limit', 1000)
                 })
             })
             describe('Set value to undefined to delete the item', function () {
@@ -524,8 +573,49 @@ function contextApiTests ({ testName, driverType, driverOptions, appPort, authSe
                 })
             })
         })
-
+        describe('Quota tests ', function () {
+            beforeEach(async function () {
+                // clean everything
+                await DELETE('global')
+                await CLEAN([])
+            })
+            it('Should fail if quota is exceeded across scopes', async function () {
+                const str250bytes = new Array(255).join('a')
+                await SET('flow-1', [{ key: 'big-data-1', value: str250bytes }]) // 255 bytes
+                await SET('global', [{ key: 'big-data-2', value: str250bytes }]) // 510 bytes
+                const r3 = await SET('node-1:flow-1', [{ key: 'big-data-3', value: str250bytes }]) // 760 bytes
+                should(r3.statusCode).eql(200)
+                const response = await SET('node-2:flow-1', [{ key: 'big-data-4', value: str250bytes }]) // over 1000 bytes
+                should(response.statusCode).eql(413)
+                const body = response.json()
+                body.should.have.property('error')
+                body.should.have.property('code', 'over_quota')
+                body.should.have.property('limit', 1000)
+            })
+            it('Should allow update/deletion/addition without exceeding quota', async function () {
+                const str100bytes = new Array(100).join('a')
+                const str150bytes = new Array(150).join('b')
+                const str500bytes = new Array(500).join('c')
+                await SET('global', [{ key: 'data-1', value: str100bytes }, { key: 'data-2', value: str100bytes }, { key: 'data-3', value: str100bytes }]) // 300 bytes
+                await SET('global', [{ key: 'data-4', value: str100bytes }, { key: 'data-5', value: str100bytes }, { key: 'data-6', value: str100bytes }]) // 600 bytes
+                // Starting at 600bytes:  add 500 bytes, delete 300 bytes, update 100->150 bytes, leaving a total of 850 bytes
+                const response = await SET('global', [
+                    { key: 'data-new', value: str500bytes }, // add 500 bytes
+                    { key: 'data-1', value: undefined }, // delete 100 bytes
+                    { key: 'data-2', value: undefined }, // delete 100 bytes
+                    { key: 'data-3', value: str150bytes }, // update 100->150 bytes
+                    { key: 'data-4', value: undefined } // delete 100 bytes
+                ])
+                should(response.statusCode).eql(200)
+                const body = response.json()
+                body.should.not.have.property('error')
+            })
+        })
         describe('Bleed tests', function () {
+            beforeEach(async function () {
+                await DELETE('global')
+                await CLEAN([])
+            })
             it('Should not be able to access to other projects context', async function () {
                 // 1st set some values in test-project-1 to ensure that the token is cached
                 const set1 = await SET('flow-1', [fv1, fv2], 'test-project-1', 'test-token-1')
