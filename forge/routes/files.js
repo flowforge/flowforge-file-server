@@ -47,7 +47,7 @@ module.exports = async function (app, opts, done) {
             } else {
                 // should really check if file exists first and compute the delta
                 if (quota !== -1) {
-                    const newSize = quota + request.body.size
+                    const newSize = quota + request.body.length
                     if (newSize < app.config.driver.quota) {
                         await request.vfs.save(path, request.body)
                     } else {
