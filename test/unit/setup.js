@@ -60,7 +60,7 @@ async function setupApp (config = {}) {
             type: config.fileDriverType || 'memory',
             quota: config.contextQuota || 2000, // default context quota is 2KB
             options: config.fileDriverOptions || {
-                root: '/var/root'
+                root: 'var/root'
             }
         },
         context: {

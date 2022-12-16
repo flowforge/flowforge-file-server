@@ -13,7 +13,7 @@ describe('File API', function () {
     fileApiTests({
         driverType: 'localfs',
         driverOptions: {
-            root: '/var/root'
+            root: 'var/root'
         },
         appPort: 4121,
         authServerPort: 4122,
