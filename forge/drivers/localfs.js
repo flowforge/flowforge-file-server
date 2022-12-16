@@ -4,7 +4,7 @@ const { join, isAbsolute, dirname, sep: pathSeparator, parse } = require('path')
 const canary = 'ROOT_DIR_CANARY'
 
 async function readDirSize (dir) {
-    if (!fs.existsSync(join(dir))) {
+    if (!fs.existsSync(dir)) {
         return 0
     }
     const files = fs.readdirSync(dir, { withFileTypes: true })
