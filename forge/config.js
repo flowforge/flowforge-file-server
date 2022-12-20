@@ -2,6 +2,7 @@
 const fs = require('fs')
 const fp = require('fastify-plugin')
 const path = require('path')
+const xbytes = require('xbytes')
 const YAML = require('yaml')
 
 module.exports = fp(async function (app, opts, next) {
@@ -85,6 +86,16 @@ module.exports = fp(async function (app, opts, next) {
         if (!config.logging.http) {
             config.logging.http = 'warn'
         }
+    }
+
+    if (config.driver?.quota) {
+        const parsed = xbytes.parse(config.driver.quota)
+        config.driver.quota = parsed.bytes
+    }
+
+    if (config.context?.quota) {
+        const parsed = xbytes.parse(config.context.quota)
+        config.context.quota = parsed.bytes
     }
     Object.freeze(config)
     app.decorate('config', config)
