@@ -131,9 +131,11 @@ module.exports = function (app) {
             }))
 
             let size = 0
-            objects.Contents.forEach(file => {
-                size += file.Size
-            })
+            if (objects.Contents) {
+                objects.Contents.forEach(file => {
+                    size += file.Size
+                })
+            }
 
             return size
         }
