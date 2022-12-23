@@ -28,6 +28,7 @@ jobs:
         ports:
           - 9000:9000
         options: >-
+          --entrypoint "/usr/bin/docker-entrypoint.sh server /data"
           --health-cmd "curl -s http://localhost:9000/minio/health/live"
     strategy:
       matrix:
