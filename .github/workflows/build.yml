@@ -24,11 +24,10 @@ jobs:
           # Maps tcp port 5432 on service container to the host
           - 5432:5432
       minio:
-        image: minio/minio
+        image: minio/minio:edge-cicd
         ports:
           - 9000:9000
         options: >-
-          --entrypoint "/usr/bin/docker-entrypoint.sh server /data"
           --health-cmd "curl -s http://localhost:9000/minio/health/live"
     strategy:
       matrix:
