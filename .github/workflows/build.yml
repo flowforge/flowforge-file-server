@@ -24,7 +24,7 @@ jobs:
           # Maps tcp port 5432 on service container to the host
           - 5432:5432
       minio:
-        image: minio/edge-cid
+        image: minio/minio
         ports:
           - 9000:9000
         options: >-
